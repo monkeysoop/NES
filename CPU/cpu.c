@@ -1185,13 +1185,13 @@ int main() {
 
     if (nes_file == NULL) {
         perror("fopen");
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 
     struct stat st;
     if (stat(nes_filename, &st) == -1) {
         perror("stat");
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 
     int len = (st.st_size < MEM_SIZE) ? st.st_size : MEM_SIZE;
