@@ -1,18 +1,28 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.22)
 project(NES LANGUAGES C)
 
 
-#add_custom_target(copy-main-ui ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/main.ui)
-#add_custom_command(
-#    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/main.ui
-#    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/main.ui
-#    ${CMAKE_CURRENT_BINARY_DIR}/main.ui
-#    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/main.ui
-#)
+add_custom_target(copy-font-png ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/font.png)
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/font.png
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/font.png
+    ${CMAKE_CURRENT_BINARY_DIR}/font.png
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/font.png
+)
 
-find_package(SDL2 REQUIRED)
-include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
+
 
 add_executable(${PROJECT_NAME} main.c)
+
+
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)   # for sdl image
+
+find_package(SDL2 REQUIRED)
+find_package(SDL2_image REQUIRED)
+
+include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
+
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${SDL2_IMAGE_LIBRARIES})
 
