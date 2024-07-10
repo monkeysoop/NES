@@ -1,3 +1,3 @@
 project(CPU)
 
-add_executable(CPU cpu.c cpu.h)
+add_executable(${PROJECT_NAME} cpu.c cpu.h)

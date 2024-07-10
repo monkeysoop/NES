@@ -23,21 +23,6 @@ typedef enum {
     NEGATIVE =      0b10000000
 } StatusFlags;
 
-//typedef enum {
-//    ACCUMULATOR,
-//    IMMEDIATE,
-//    ABSOLUTE,
-//    ZERO_PAGE,
-//    ZERO_PAGE_X,
-//    ZERO_PAGE_Y,
-//    ABSOLUTE_X,
-//    ABSOLUTE_Y,
-//    IMPLIED,
-//    RELATIVE,
-//    INDIRECT_X,
-//    INDIRECT_Y,
-//    INDIRECT
-//} AddressMode;
 
 typedef struct {
     uint8_t a_register;
