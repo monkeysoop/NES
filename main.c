@@ -274,6 +274,10 @@ int main(int argc, char** argv)
 					//app.MouseMove(ev.motion);
 					break;
 				case SDL_WINDOWEVENT:
+                    if (ev.window.event == SDL_WINDOWEVENT_CLOSE) {
+                        quit = true;
+                    }
+					break;
 					//// Néhány platformon (pl. Windows) a SIZE_CHANGED nem hívódik meg az első megjelenéskor.
 					//// Szerintünk ez bug az SDL könytárban.
 					//// Ezért ezt az esetet külön lekezeljük, 
@@ -288,39 +292,15 @@ int main(int argc, char** argv)
 			}
 		}
 
+		render(pixels);
+        main_render(main_renderer, main_texture, pixels);
+        
+
         if (i_pressed) {
             (debug_shown) ? SDL_HideWindow(debug_window) : SDL_ShowWindow(debug_window);
             debug_shown = !(debug_shown);
             i_pressed = false;
         }
-
-
-
-		render(pixels);
-        main_render(main_renderer, main_texture, pixels);
-        //SDL_UpdateTexture(main_texture, NULL, pixels, NES_SCREEN_WIDTH * sizeof(uint32_t));
-        //
-        //SDL_SetRenderDrawColor(main_renderer, 0xFF, 0x00, 0x00, 0xFF);
-        //SDL_RenderClear(main_renderer);
-        //
-        //int w;
-        //int h;
-        //SDL_GetRendererOutputSize(main_renderer, &w, &h);
-        //
-        //SDL_Rect screen_rect = {.x=0, .y=0, .w=w, .h=h};
-        //
-        //SDL_RenderCopyEx(
-        //    main_renderer, 
-        //    main_texture, 
-        //    NULL, 
-        //    &screen_rect,
-        //    0.0,
-        //    NULL,
-        //    SDL_FLIP_NONE
-        //);
-        //
-        //SDL_RenderPresent(main_renderer);
-        
 
         if (debug_shown) {
             debug_render(debug_renderer, debug_texture, font_texture, chars);
