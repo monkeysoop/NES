@@ -25,18 +25,18 @@ uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address) {
     } else if (address < 0x4000) {
         // ppu io registers
         switch (address & 0x2007) {
-            case PPU_CTRL: printf("open buss read\n"); break;
-            case PPU_MASK: printf("open buss read\n"); break;
+            case PPU_CTRL: printf("open bus read\n"); break;
+            case PPU_MASK: printf("open bus read\n"); break;
             case PPU_STATUS: 
                 cpu_bus->ppu_io_open_bus_data &= STALE_PPU_BUS_CONTENTS_BITS;
                 cpu_bus->ppu_io_open_bus_data |= (PPUReadStatus(cpu_bus->ppu) & (SPRITE_OVERFLOW_BITS | SPRITE_ZERO_HIT_BITS | VERTICAL_BLANK_BITS)); 
                 break;
-            case OAM_ADDRESS: printf("open buss read\n"); break;
+            case OAM_ADDRESS: printf("open bus read\n"); break;
             case OAM_DATA: 
                 cpu_bus->ppu_io_open_bus_data = PPUReadOAMData(cpu_bus->ppu); 
                 break;
-            case PPU_SCROLL: printf("open buss read\n"); break;
-            case PPU_ADDRESS: printf("open buss read\n"); break;
+            case PPU_SCROLL: printf("open bus read\n"); break;
+            case PPU_ADDRESS: printf("open bus read\n"); break;
             case PPU_DATA: 
                 cpu_bus->ppu_io_open_bus_data = PPUReadPPUData(cpu_bus->ppu); break;
         }
@@ -47,7 +47,7 @@ uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address) {
             case APU_CTRL: ; break;
             case JOYSTICK_1_DATA: ; break;
             case JOYSTICK_2_DATA: ; break;
-            default: printf("open buss read\n"); break;
+            default: printf("open bus read\n"); break;
         }
 
         printf("apu and io registers not implemented\n"); 
@@ -78,7 +78,7 @@ void CPUBusWrite(CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
                 PPUWriteMask(cpu_bus->ppu, data);
                 break;
             case PPU_STATUS: 
-                printf("open buss write\n");
+                printf("open bus write\n");
                 break;
             case OAM_ADDRESS: 
                 PPUWriteOAMAddress(cpu_bus->ppu, data);
