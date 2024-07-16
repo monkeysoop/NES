@@ -297,7 +297,12 @@ int main(int argc, char** argv)
         
 
         if (i_pressed) {
-            (debug_shown) ? SDL_HideWindow(debug_window) : SDL_ShowWindow(debug_window);
+            if (debug_shown) {
+                SDL_HideWindow(debug_window);
+            } else {
+                SDL_ShowWindow(debug_window);
+                SDL_RaiseWindow(debug_window);
+            }
             debug_shown = !(debug_shown);
             i_pressed = false;
         }
