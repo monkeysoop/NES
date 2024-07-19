@@ -28,6 +28,10 @@ void PPUInit(PPU* ppu, PPUBus* ppu_bus, CPU* cpu, TVSystem tv_system) {
     ppu->x = 0;
     ppu->w = 0;
 
+    ppu->ppu_data_buffer = 0;
+
+    memset(ppu->OAM, 0, 256 * sizeof(uint8_t));
+
     ppu->render_state = PRE_RENDER;
     ppu->scanline = (tv_system == NTSC) ? NTSC_VERTICAL_BLANKING_SCANLINE_END : PAL_VERTICAL_BLANKING_SCANLINE_END;
     ppu->cycle = 0;
@@ -49,6 +53,10 @@ void PPUReset(PPU* ppu, TVSystem tv_system) {
     ppu->t = 0;
     ppu->t = 0;
     ppu->w = 0;
+
+    ppu->ppu_data_buffer = 0;
+
+    memset(ppu->OAM, 0, 256 * sizeof(uint8_t));
 
     ppu->render_state = PRE_RENDER;
     ppu->scanline = (tv_system == NTSC) ? NTSC_VERTICAL_BLANKING_SCANLINE_END : PAL_VERTICAL_BLANKING_SCANLINE_END;
@@ -197,5 +205,89 @@ void PPUClockNTSC(PPU* ppu) {
             break;
     }
     ppu->cycle++;
+}
+
+
+void PPUWriteCtrl(PPU* ppu, const uint8_t data) {
+    ppu->ctrl_register = data;
+
+    ppu->t &= ~((uint16_t)BASE_NAMETABLE_BITS << 10);
+    ppu->t |= (ppu->ctrl_register & BASE_NAMETABLE_BITS) << 10;
+}
+
+void PPUWriteMask(PPU* ppu, const uint8_t data) {
+    ppu->mask_register = data;
+}
+
+void PPUWriteOAMAddress(PPU* ppu, const uint8_t data) {
+    ppu->oam_address_register = data;
+}
+
+void PPUWriteOAMData(PPU* ppu, const uint8_t data) {
+    ppu->OAM[ppu->oam_address_register] = data;
+    ppu->oam_address_register++;
+}
+
+void PPUWriteScroll(PPU* ppu, const uint8_t data) {
+    if (ppu->w) {
+        // 2. write
+        ppu->t &= 0b1000110000011111;
+        //ppu->t &= ~0x73E0;
+        ppu->t |= ((data & 0b00000111) << 12) | ((data & 0x11111000) << 2);
+        ppu->w = 0; 
+    } else {
+        // 1. write
+        ppu->t &= 0b1111111111100000;
+        ppu->t |= (data >> 3);// this is unneceseary: & 0b0000000000011111;
+        ppu->x = data & 0x0007;
+        ppu->w = 1;
+    }
+}
+
+void PPUWritePPUAddress(PPU* ppu, const uint8_t data) {
+    if (ppu->w) {
+        // 2. write
+        ppu->t &= 0xFF00;
+        ppu->t |= data;
+        ppu->v = ppu->t;
+        ppu->w = 0; 
+    } else {
+        // 1. write
+        ppu->t &= 0x00FF;
+        ppu->t |= ((data & 0b00111111) << 8);
+        ppu->w = 1;
+    }
+}
+
+void PPUWritePPUData(PPU* ppu, const uint8_t data) {
+    PPUBusWrite(ppu->ppu_bus, ppu->v, data);
+    ppu->v += ((ppu->ctrl_register & VRAM_ADDRESS_INCREMENT_BIT) ? 32 : 1);
+}
+
+void PPUWriteDMAAddress(PPU* ppu, const uint8_t data) {
+    printf("dma not implemented\n");
+    exit(1);
+}
+
+
+uint8_t PPUReadStatus(PPU* ppu) {
+    uint8_t temp = ppu->status_register;
+    ppu->w = 0;
+    ppu->status_register &= ~VERTICAL_BLANK_BIT;
+    return temp;
+}
+
+uint8_t PPUReadOAMData(PPU* ppu) {
+    return ppu->OAM[ppu->oam_address_register];
+}
+
+uint8_t PPUReadPPUData(PPU* ppu) {
+    uint8_t temp = ppu->ppu_data_buffer;
+    ppu->ppu_data_buffer = PPUBusRead(ppu->ppu_bus, ppu->v);
+    if (ppu->v >= 0x3F00) {
+        temp = ppu->ppu_data_buffer;
+    }
+    ppu->v += ((ppu->ctrl_register & VRAM_ADDRESS_INCREMENT_BIT) ? 32 : 1);
+    return temp;
 }
 

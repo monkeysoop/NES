@@ -76,6 +76,10 @@ typedef struct PPU {
     uint8_t x;
     uint8_t w;
 
+    uint8_t ppu_data_buffer;
+
+    uint8_t OAM[256];
+
     RenderState render_state;
     uint16_t scanline;
     uint16_t cycle;
