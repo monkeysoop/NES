@@ -29,7 +29,7 @@ uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address) {
             case PPU_MASK: printf("open bus read\n"); break;
             case PPU_STATUS: 
                 cpu_bus->ppu_io_open_bus_data &= STALE_PPU_BUS_CONTENTS_BITS;
-                cpu_bus->ppu_io_open_bus_data |= (PPUReadStatus(cpu_bus->ppu) & (SPRITE_OVERFLOW_BITS | SPRITE_ZERO_HIT_BITS | VERTICAL_BLANK_BITS)); 
+                cpu_bus->ppu_io_open_bus_data |= (PPUReadStatus(cpu_bus->ppu) & (SPRITE_OVERFLOW_BIT | SPRITE_ZERO_HIT_BIT | VERTICAL_BLANK_BIT)); 
                 break;
             case OAM_ADDRESS: printf("open bus read\n"); break;
             case OAM_DATA: 
