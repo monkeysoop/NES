@@ -62,7 +62,7 @@ typedef struct {
     void (*MapperScanlineIRQ)(Cartridge*);
 } Cartridge;
 
-TVSystem CartridgeInit(Cartridge* cartridge, const char* filename);
+void CartridgeInit(Cartridge* cartridge, const char* filename);
 void CartridgeClean(Cartridge* cartridge);
 
 void CartridgeScanlineIRQ(Cartridge* cartridge);

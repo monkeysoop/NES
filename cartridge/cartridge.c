@@ -1,6 +1,7 @@
 #include "cartridge.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef struct {
     uint8_t name[4];
@@ -32,12 +33,12 @@ typedef struct {
 
 
 
-Cartridge* CartridgeInit(Cartridge* cartridge, const char* filename) {
+void CartridgeInit(Cartridge* cartridge, const char* filename) {
     FILE* cartridge_file = fopen(filename, "r");
     
     if (cartridge_file == NULL) {
         printf("Failed to open file\n");
-        return NULL;
+        exit(1);
     }
 
     Header header;
@@ -45,25 +46,21 @@ Cartridge* CartridgeInit(Cartridge* cartridge, const char* filename) {
     if (ret != 1) {
         printf("Failed to read header\n");
         fclose(cartridge_file);
-        return NULL;
+        exit(1);
     }
 
     if (header.name[0] != 0x4e || header.name[0] != 0x45 || header.name[0] != 0x53 || header.name[0] != 0x1a) {
         printf("Incorrect file format\n");
         fclose(cartridge_file);
-        return NULL;
+        exit(1);
     }
-
-
 
     
     if (header.alternative_layout == 1) {
         printf("alternative layout not supported\n");
         fclose(cartridge_file);
-        return NULL;
+        exit(1);
     }
-
-
 
 
     if (header.nes_format_id & 0b10) {
@@ -80,21 +77,20 @@ Cartridge* CartridgeInit(Cartridge* cartridge, const char* filename) {
         // iNES 0.7 or archaic iNES
         printf("format not supported(implemented)\n");
         fclose(cartridge_file);
-        return NULL;
+        exit(1);
     }
-
 
 
     if (cartridge->format == NES_2) {
         printf("NES 2.0 (rom format) not supported\n");
         fclose(cartridge_file);
-        return NULL;
+        exit(1);
     } else if (cartridge->format == ARCHAIC_iNES) {
         printf("Archaic iNES (rom format) not supported\n");
         fclose(cartridge_file);
-        return NULL;
+        exit(1);
     } else if (cartridge->format == iNES) {
-        cartridge->nametable_layout = header.mirroring ? VERTICAL : HORIZONTAL;
+
 
         if (header.TV_system == 1) {
             cartridge->tv_system = PAL;
@@ -103,22 +99,32 @@ Cartridge* CartridgeInit(Cartridge* cartridge, const char* filename) {
         }
 
         
-        uint8_t mapper_id = header.mapper_id_bits_0123 | (header.mapper_id_bits_4567 << 4);
-    
 
         if (header.chr_rom_8KB_units == 0) {
             // 0 means that it's ram not rom and usually with size 8KB
             printf("CHR RAM not supported\n");
             fclose(cartridge_file);
-            return NULL;
+            exit(1);
         }
 
+
+        uint8_t mapper_id = header.mapper_id_bits_0123 | (header.mapper_id_bits_4567 << 4);
+
+        cartridge->mapper_id = mapper_id;
+
         switch (mapper_id) {
-            case NROM: Mapper000Init(cartridge->mapper, header.prg_rom_16KB_units, header.chr_rom_8KB_units); break;
+            case NROM: Mapper000Init(cartridge, header.prg_rom_16KB_units, header.prg_ram_8KB_units, header.chr_rom_8KB_units); break;
+            case SxROM:
+            case UxROM:
+            case CNROM:
+            case MMC3:
+            case AxROM:
+            case ColorDreams:
+            case GxROM:
             default: 
                 printf("Mapper not supported\n"); 
                 fclose(cartridge_file); 
-                return NULL;
+                exit(1);
         }
 
 
@@ -127,38 +133,112 @@ Cartridge* CartridgeInit(Cartridge* cartridge, const char* filename) {
             fseek(cartridge_file, 512, SEEK_CUR);
         }
 
+        cartridge->prg_rom_16KB_units = header.prg_rom_16KB_units;
+        cartridge->chr_rom_8KB_units= header.chr_rom_8KB_units;
+        cartridge->prg_ram_8KB_units = header.prg_ram_8KB_units;
+
         unsigned int prg_rom_size = header.prg_rom_16KB_units * 16 * 1024;
         unsigned int chr_rom_size = header.chr_rom_8KB_units * 8 * 1024;
+        unsigned int prg_ram_size = header.prg_ram_8KB_units * 8 * 1024;
 
-        fread(cartridge->mapper->prg_rom, sizeof(uint8_t), prg_rom_size, cartridge_file);
-        fread(cartridge->mapper->chr_rom, sizeof(uint8_t), chr_rom_size, cartridge_file);
+        cartridge->prg_rom = malloc(prg_rom_size * sizeof(uint8_t));
+        cartridge->chr_rom = malloc(chr_rom_size * sizeof(uint8_t));
+
+        memset(cartridge->prg_rom, 0, prg_rom_size * sizeof(uint8_t));
+        memset(cartridge->chr_rom, 0, chr_rom_size * sizeof(uint8_t));
+
+        fread(cartridge->prg_rom, sizeof(uint8_t), prg_rom_size, cartridge_file);
+        fread(cartridge->chr_rom, sizeof(uint8_t), chr_rom_size, cartridge_file);
+
+
+        if (cartridge->prg_ram_8KB_units != 0) {
+            cartridge->prg_ram = malloc(prg_ram_size * sizeof(uint8_t));
+            memset(cartridge->prg_ram, 0, prg_ram_size * sizeof(uint8_t));
+        }
+
+
+        Mirroring mirroring = header.mirroring ? VERTICAL_MIRRORING : HORIZONTAL_MIRRORING;
+        CartridgeSetMirroring(cartridge, mirroring);
     }
 
-
-
-
     fclose(cartridge_file);
+    
+    return;
 }
 
 
 void CartridgeClean(Cartridge* cartridge) {
-    cartridge->mapper->MapperClean(cartridge->mapper);
+    free(cartridge->prg_rom);
+    free(cartridge->chr_rom);
+    if (cartridge->prg_ram_8KB_units != 0) {
+        free(cartridge->prg_ram);
+    }
+}
+
+void CartridgeScanlineIRQ(Cartridge* cartridge) {
+    if (cartridge->mapper_id == MMC3) {
+        cartridge->MapperScanlineIRQ(cartridge);
+    }
+}
+
+void CartridgeSetMirroring(Cartridge* cartridge, Mirroring mirroring) {
+    switch (mirroring) {
+        case VERTICAL_MIRRORING: 
+            cartridge->mirroring_offsets[0] = 0x0;
+            cartridge->mirroring_offsets[1] = 0x0;
+            cartridge->mirroring_offsets[2] = 0x400;
+            cartridge->mirroring_offsets[3] = 0x400;
+            break;
+        case HORIZONTAL_MIRRORING: 
+            cartridge->mirroring_offsets[0] = 0x0;
+            cartridge->mirroring_offsets[1] = 0x400;
+            cartridge->mirroring_offsets[2] = 0x0;
+            cartridge->mirroring_offsets[3] = 0x400;
+            break;
+        case ONE_SCREEN_MIRRORING: 
+            cartridge->mirroring_offsets[0] = 0x0;
+            cartridge->mirroring_offsets[1] = 0x0;
+            cartridge->mirroring_offsets[2] = 0x0;
+            cartridge->mirroring_offsets[3] = 0x0;
+            break;
+        case ONE_SCREEN_LOWER_MIRRORING: 
+            cartridge->mirroring_offsets[0] = 0x0;
+            cartridge->mirroring_offsets[1] = 0x0;
+            cartridge->mirroring_offsets[2] = 0x0;
+            cartridge->mirroring_offsets[3] = 0x0;
+            break;
+        case ONE_SCREEN_UPPER_MIRRORING: 
+            cartridge->mirroring_offsets[0] = 0x400;
+            cartridge->mirroring_offsets[1] = 0x400;
+            cartridge->mirroring_offsets[2] = 0x400;
+            cartridge->mirroring_offsets[3] = 0x400;
+            break;
+        case FOUR_SCREEN_MIRRORING: 
+            cartridge->mirroring_offsets[0] = 0x0;
+            cartridge->mirroring_offsets[1] = 0x0;
+            cartridge->mirroring_offsets[2] = 0x0;
+            cartridge->mirroring_offsets[3] = 0x0;
+            break;
+        default:
+            printf("unsuported mirroring\n");
+            exit(1);
+    }
 }
 
 
 uint8_t CartridgeReadCPU(Cartridge* cartridge, const uint16_t address) {
-    return cartridge->mapper->MapperReadCPU(cartridge->mapper, address);
+    return cartridge->MapperReadCPU(cartridge, address);
 }
 
 uint8_t CartridgeReadPPU(Cartridge* cartridge, const uint16_t address) {
-    return cartridge->mapper->MapperReadPPU(cartridge->mapper, address);
+    return cartridge->MapperReadPPU(cartridge, address);
 }
 
 
 void CartridgeWriteCPU(Cartridge* cartridge, const uint16_t address, const uint8_t value) {
-    cartridge->mapper->MapperWriteCPU(cartridge->mapper, address, value);
+    cartridge->MapperWriteCPU(cartridge, address, value);
 }
 
 void CartridgeWritePPU(Cartridge* cartridge, const uint16_t address, const uint8_t value) {
-    cartridge->mapper->MapperWritePPU(cartridge->mapper, address, value);
+    cartridge->MapperWritePPU(cartridge, address, value);
 }
