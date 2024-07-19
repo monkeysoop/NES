@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "emulator.h"
+
 #define NES_SCREEN_WIDTH 256
 #define NES_SCREEN_HEIGHT 240
 
@@ -219,7 +221,7 @@ int main(int argc, char** argv)
     SDL_Texture* font_texture = NULL;
 
     init(&main_window, &main_renderer, &main_texture, &debug_window, &debug_renderer, &debug_texture, &font_texture);
-
+    
     
 
     uint32_t* pixels = malloc(NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT * sizeof(uint32_t));

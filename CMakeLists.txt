@@ -12,7 +12,7 @@ add_custom_command(
 
 
 
-add_executable(${PROJECT_NAME} main.c)
+add_executable(${PROJECT_NAME} main.c emulator.c emulator.h)
 
 
 
