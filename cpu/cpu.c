@@ -1064,38 +1064,37 @@ static const Instruction instructions[256] = {
 
 
 
-void Init(CPU* cpu) {
+void CPUInit(CPU* cpu) {
     // registers
-    cpu->registers.a_register = 0x00;
-	cpu->registers.x_register = 0x00; 
-	cpu->registers.y_register = 0x00;   
-    cpu->registers.status_flags = 0x00;
-    cpu->registers.stack_pointer = 0x00; 
-	cpu->registers.program_counter = 0x0000;
+    cpu->registers.a_register = 0;
+	cpu->registers.x_register = 0; 
+	cpu->registers.y_register = 0;   
+    cpu->registers.status_flags = 0;
+    cpu->registers.stack_pointer = RESET_OFFSET; 
+	cpu->registers.program_counter = 0;
 
     cpu->remaining_cycles = 0;
     cpu->tick_counter = 0;
 
+    SetUnusedFlagValue(cpu, 1);
+    SetIrgDisableFlagValue(cpu, 1);
 }
 
 
-void Reset(CPU* cpu) {
-    cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
+void CPUReset(CPU* cpu) {
+    cpu->registers.program_counter = RESET_OFFSET;
     
-    cpu->registers.a_register = 0x00;
-    cpu->registers.x_register = 0x00;
-    cpu->registers.y_register = 0x00;
-    cpu->registers.stack_pointer = 0xFD;
+    cpu->registers.stack_pointer -= 3;
 
-    ClearAllFlags(cpu);
     SetUnusedFlagValue(cpu, 1);
+    SetIrgDisableFlagValue(cpu, 1);
 
     cpu->remaining_cycles = 8;
 }
 
 
 
-void InterruptRequest(CPU* cpu) {
+void CPUInterruptRequest(CPU* cpu) {
     if (GetIrqDisableFlagValue(cpu) == 0) {
         StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
 
@@ -1111,7 +1110,7 @@ void InterruptRequest(CPU* cpu) {
     }
 }
 
-void NonMaskableInterrupt(CPU* cpu) {
+void CPUNonMaskableInterrupt(CPU* cpu) {
     StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
 
     SetBrkCommandFlagValue(cpu, 0);
@@ -1126,7 +1125,7 @@ void NonMaskableInterrupt(CPU* cpu) {
 }
 
 //void tick(CPU* cpu, FILE* log_file) {
-void tick(CPU* cpu) {
+void CPUClock(CPU* cpu) {
     if (cpu->remaining_cycles == 0) {
         uint8_t op_code = ReadByte(cpu, cpu->registers.program_counter);
         cpu->registers.program_counter++;

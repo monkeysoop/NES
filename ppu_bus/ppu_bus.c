@@ -1,20 +1,23 @@
 #include "ppu_bus.h"
 
-void InitPPUBus(PPUBus* ppu_bus, Cartridge* cartridge) {
+void PPUBusInit(PPUBus* ppu_bus, Cartridge* cartridge) {
     ppu_bus->cartridge = cartridge;
     memset(ppu_bus->palette, 0x00, PALETTE_RAM_SIZE * sizeof(uint8_t));
 }
 
-void ResetPPUBus(PPUBus* ppu_bus) {
+void PPUBusReset(PPUBus* ppu_bus) {
     memset(ppu_bus->palette, 0x00, PALETTE_RAM_SIZE * sizeof(uint8_t));
 }
 
+void PPUBusScanlineIRQ(PPUBus* ppu_bus) {
+    CartridgeScanlineIRQ(ppu_bus->cartridge);
+}
 
-uint8_t ReadPPUBus(PPUBus* ppu_bus, const uint16_t address) {
+uint8_t PPUBusRead(PPUBus* ppu_bus, const uint16_t address) {
     if (address < 0x3000) {
-        return PPUReadCartridge(ppu_bus->cartridge, address);
+        return CartridgeReadPPU(ppu_bus->cartridge, address);
     } else if (address < 0x3F00) {
-        return PPUReadCartridge(ppu_bus->cartridge, (address - 0x1000));
+        return CartridgeReadPPU(ppu_bus->cartridge, (address - 0x1000));
     } else if (address < 0x3FFF) {
         return ppu_bus->palette[(address & 0x1F)];
     } else {
@@ -24,6 +27,6 @@ uint8_t ReadPPUBus(PPUBus* ppu_bus, const uint16_t address) {
     
 }
 
-void WritePPUBus(PPUBus* ppu_bus, const uint16_t address, const uint8_t data) {
+void PPUBusWrite(PPUBus* ppu_bus, const uint16_t address, const uint8_t data) {
 
 }

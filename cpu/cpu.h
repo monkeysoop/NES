@@ -14,17 +14,14 @@
 #define NON_MASKABLE_INTERRUPT_OFFSET 0xFFFA
 
 
-typedef enum {
-    CARRY =         0b00000001,
-    ZERO =          0b00000010,
-    IRQ_DISABLE =   0b00000100,
-    DECIMAL_MODE =  0b00001000,
-    BRK_COMMAND =   0b00010000,
-    UNUSED =        0b00100000,
-    OVERFLOW =      0b01000000,
-    NEGATIVE =      0b10000000
-} StatusFlags;
-
+#define CARRY 0b00000001
+#define ZERO 0b00000010
+#define IRQ_DISABLE 0b00000100
+#define DECIMAL_MODE 0b00001000
+#define BRK_COMMAND 0b00010000
+#define UNUSED 0b00100000
+#define OVERFLOW 0b01000000
+#define NEGATIVE 0b10000000
 
 typedef struct Registers {
     uint8_t a_register;
@@ -45,13 +42,13 @@ typedef struct CPU {
 } CPU;
 
 
-void Init(CPU* cpu);
-void Reset(CPU* cpu);
+void CPUInit(CPU* cpu);
+void CPUReset(CPU* cpu);
 
-void InterruptRequest(CPU* cpu);
-void NonMaskableInterrupt(CPU* cpu);
+void CPUInterruptRequest(CPU* cpu);
+void CPUNonMaskableInterrupt(CPU* cpu);
 
-void tick(CPU* cpu);
+void CPUClock(CPU* cpu);
 
 
 

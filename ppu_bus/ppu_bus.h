@@ -16,11 +16,12 @@ typedef struct PPUBus {
     Cartridge* cartridge;
 } PPUBus;
 
-void InitPPUBus(PPUBus* ppu_bus, Cartridge* cartridge);
-void ResetPPUBus(PPUBus* ppu_bus);
+void PPUBusInit(PPUBus* ppu_bus, Cartridge* cartridge);
+void PPUBusReset(PPUBus* ppu_bus);
 
+void PPUBusScanlineIRQ(PPUBus* ppu_bus);
 
-uint8_t ReadPPUBus(PPUBus* ppu_bus, const uint16_t address);
-void WritePPUBus(PPUBus* ppu_bus, const uint16_t address, const uint8_t data);
+uint8_t PPUBusRead(PPUBus* ppu_bus, const uint16_t address);
+void PPUBusWrite(PPUBus* ppu_bus, const uint16_t address, const uint8_t data);
 
 #endif
