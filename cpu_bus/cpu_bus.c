@@ -57,7 +57,7 @@ uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address) {
         printf("cpu test mode not implemented\n");
         exit(1);
     } else {
-        cpu_bus->cpu_open_bus_data = CPUReadCartridge(cpu_bus->cartridge, address);
+        cpu_bus->cpu_open_bus_data = CartridgeReadCPU(cpu_bus->cartridge, address);
     }
     return cpu_bus->cpu_open_bus_data;
 }
@@ -132,6 +132,6 @@ void CPUBusWrite(CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
         printf("cpu test mode not implemented\n");
         exit(1);
     } else {
-        CPUWriteCartridge(cpu_bus->cartridge, address, data);
+        CartridgeWriteCPU(cpu_bus->cartridge, address, data);
     }
 }
