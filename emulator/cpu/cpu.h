@@ -6,8 +6,9 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "cpu_bus.h"
+//#include "cpu_bus.h"
 
+#define STACK_POINTER_OFFSET 0xFD
 #define STACK_OFFSET 0x0100
 #define RESET_OFFSET 0xFFFC
 #define BREAK_INTERRUPT_OFFSET 0xFFFE
@@ -38,7 +39,7 @@ typedef struct CPU {
 
     Registers registers;
 
-    CPUBus* cpu_bus;
+    //CPUBus* cpu_bus;
 } CPU;
 
 
@@ -50,6 +51,6 @@ void CPUNonMaskableInterrupt(CPU* cpu);
 
 void CPUClock(CPU* cpu);
 
-
+uint8_t CPUDisassemble(CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h);
 
 #endif

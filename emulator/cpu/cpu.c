@@ -1,7 +1,7 @@
 #include "cpu.h"
+#include <string.h>
 
-
-//uint8_t memory[65536];
+uint8_t memory[65536];
 
 
 
@@ -108,10 +108,12 @@ static inline void ClearAllFlags(CPU* cpu) {
 
 
 static inline uint8_t ReadByte(CPU* cpu, const uint16_t address) {
-    return ReadCPUBus(cpu->cpu_bus, address);
+    return memory[address];
+    //return ReadCPUBus(cpu->cpu_bus, address);
 }
 static inline void WriteByte(CPU* cpu, const uint16_t address, const uint8_t data) {
-    WriteCPUBus(cpu->cpu_bus, address, data);
+    memory[address] = data;
+    //WriteCPUBus(cpu->cpu_bus, address, data);
 }
 
 static inline uint16_t ReadBigEndianWord(CPU* cpu, const uint16_t address_start) {
@@ -244,11 +246,7 @@ static uint16_t Indirect(CPU* cpu) {
     cpu->registers.program_counter += 2;
 
     uint16_t absolute_address;
-	if ((ptr & 0x00FF) == 0x00FF) {
-		absolute_address = (uint16_t)(ReadByte(cpu, (ptr & 0xFF00)) << 8) | (uint16_t)ReadByte(cpu, ptr);   // known hardwer bug in 6502
-	} else {
-		absolute_address = ReadLittleEndianWord(cpu, ptr);
-	}
+	absolute_address = (uint16_t)(ReadByte(cpu, ((ptr & 0xFF00) | ((ptr + 1) & 0x00FF))) << 8) | (uint16_t)ReadByte(cpu, ptr);   // known hardwer bug in 6502
 	
 	return absolute_address;
 }
@@ -1070,19 +1068,59 @@ void CPUInit(CPU* cpu) {
 	cpu->registers.x_register = 0; 
 	cpu->registers.y_register = 0;   
     cpu->registers.status_flags = 0;
-    cpu->registers.stack_pointer = RESET_OFFSET; 
-	cpu->registers.program_counter = 0;
+    cpu->registers.stack_pointer = STACK_POINTER_OFFSET; 
+    WriteLittleEndianWord(cpu, RESET_OFFSET, 0x8000);
+	cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
 
     cpu->remaining_cycles = 0;
     cpu->tick_counter = 0;
 
     SetUnusedFlagValue(cpu, 1);
     SetIrgDisableFlagValue(cpu, 1);
+
+    memset(memory, 0, 65536 * sizeof(uint8_t));
+    for (int i = 0; i < 65536 * sizeof(uint8_t); i++) {
+        memory[i] = rand() & 0xFF;
+    } 
+
+    memory[0x8000] = 0xa2;
+    memory[0x8001] = 0x0a;
+    memory[0x8002] = 0x8e;
+    memory[0x8003] = 0x00;
+    memory[0x8004] = 0x00;
+    memory[0x8005] = 0xa2;
+    memory[0x8006] = 0x03;
+    memory[0x8007] = 0x8e;
+
+    memory[0x8008] = 0x01;
+    memory[0x8009] = 0x00;
+    memory[0x800a] = 0xac;
+    memory[0x800b] = 0x00;
+    memory[0x800c] = 0x00;
+    memory[0x800d] = 0xa9;
+    memory[0x800e] = 0x00;
+    memory[0x800f] = 0x18;
+
+    memory[0x8010] = 0x6d;
+    memory[0x8011] = 0x01;
+    memory[0x8012] = 0x00;
+    memory[0x8013] = 0x88;
+    memory[0x8014] = 0xd0;
+    memory[0x8015] = 0xfa;
+    memory[0x8016] = 0x8d;
+    memory[0x8017] = 0x02;
+
+    memory[0x8018] = 0x00;
+    memory[0x8019] = 0xea;
+    memory[0x801a] = 0xea;
+    memory[0x801b] = 0xea;
+
+
 }
 
 
 void CPUReset(CPU* cpu) {
-    cpu->registers.program_counter = RESET_OFFSET;
+    cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
     
     cpu->registers.stack_pointer -= 3;
 
@@ -1149,6 +1187,201 @@ void CPUClock(CPU* cpu) {
 }
 
 
+uint8_t CPUDisassemble(CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h) {
+    // note that for addressing modes that require a register (x/y) it can't fully be disassembled 
+    // because registers are a runtime thing and this function only disassembles the code doesn't execute it 
+
+    uint16_t dummy_address = start_address;
+    uint16_t prev_dummy_address = start_address;
+    //uint16_t dummy_program_counter = cpu->registers.program_counter;
+    uint8_t active_row = h;
+    char* row_buffer = malloc(w * sizeof(char));
+
+    for (int y = 0; y < count && y < h; y++) {
+        memset(row_buffer, ' ', w * sizeof(char));
+
+        
+
+        int x = 0;
+        
+        if (dummy_address < 0x2000 || dummy_address >= 0x4020) { // with certain mappers this still could cause side effects but minimizes the chance
+            uint8_t op_code = ReadByte(cpu, dummy_address);
+            Instruction instruction = instructions[op_code];
+
+            if ((x + 12) < w) {
+                snprintf((row_buffer + x), 12, "0x%04X: %s", dummy_address, instruction.mnemonic);
+            }
+            x += 11;
+
+            dummy_address++;
+
+            if (instruction.address_mode == &IlligalMode) {
+                if ((x + 5) < w) {
+                    snprintf((row_buffer + x), 5, " ???");
+                }    
+                x += 4;
+            }
+            else if (instruction.address_mode == &Accumulator) {
+                if ((x + 5) < w) {
+                    snprintf((row_buffer + x), 5, " ACC");
+                }    
+                x += 4;
+            }
+            else if (instruction.address_mode == &Implied) {
+                if ((x + 5) < w) {
+                    snprintf((row_buffer + x), 5, " IMP");
+                } 
+                x += 4;
+            }
+            else if (instruction.address_mode == &Immediate) {
+                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                    uint8_t temp_address = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                    if ((x + 11) < w) {
+                        snprintf((row_buffer + x), 11, " IMM  0x%02X", temp_address);
+                    } 
+                    x += 10;
+                }
+            }
+            else if (instruction.address_mode == &ZeroPage) {
+                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                    uint8_t temp_address = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                    if ((x + 11) < w) {
+                        snprintf((row_buffer + x), 11, " ZP   0x%02X", temp_address);
+                    } 
+                    x += 10;
+                }
+            }
+            else if (instruction.address_mode == &ZeroPageX) {
+                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                    uint8_t temp_address = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                    if ((x + 11) < w) {
+                        snprintf((row_buffer + x), 11, " ZPX  0x%02X", temp_address);
+                    } 
+                    x += 10;
+                }
+            }
+            else if (instruction.address_mode == &ZeroPageY) {
+                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                    uint8_t temp_address = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                    if ((x + 11) < w) {
+                        snprintf((row_buffer + x), 11, " ZPY  0x%02X", temp_address);
+                    } 
+                    x += 10;
+                }
+            }
+            else if (instruction.address_mode == &Relative) {
+                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                    uint8_t temp_address = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                    if ((x + 11) < w) {
+                        snprintf((row_buffer + x), 11, " REL %c0x%02X", (((int8_t)temp_address < 0) ? '-' : '+'), (((int8_t)temp_address < 0) ? (-1 * (int8_t)temp_address) : temp_address));
+                    } 
+                    x += 10;
+                }
+            }
+            else if (instruction.address_mode == &Absolute) {
+                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                    uint16_t temp_address = ReadLittleEndianWord(cpu, dummy_address);
+                    dummy_address += 2;
+                    if ((x + 13) < w) {
+                        snprintf((row_buffer + x), 13, " ABS  0x%04X", temp_address);
+                    } 
+                    x += 12;
+                }
+            }
+            else if (instruction.address_mode == &AbsoluteX) {
+                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                    uint16_t temp_address = ReadLittleEndianWord(cpu, dummy_address);
+                    dummy_address += 2;
+                    if ((x + 13) < w) {
+                        snprintf((row_buffer + x), 13, " ABX  0x%04X", temp_address);
+                    } 
+                    x += 12;
+                }
+            }
+            else if (instruction.address_mode == &AbsoluteY) {
+                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                    uint16_t temp_address = ReadLittleEndianWord(cpu, dummy_address);
+                    dummy_address += 2;
+                    if ((x + 13) < w) {
+                        snprintf((row_buffer + x), 13, " ABY  0x%04X", temp_address);
+                    } 
+                    x += 12;
+                }
+            }
+            else if (instruction.address_mode == &Indirect) {
+                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                    uint16_t temp_address_ptr = ReadLittleEndianWord(cpu, dummy_address);
+                    dummy_address += 2;
+
+                    if ((x + 13) < w) {
+                        snprintf((row_buffer + x), 13, " IND  0x%04X", temp_address_ptr);
+                    } 
+                    x += 12;
+
+                    uint16_t temp_address_ptr_to_low = ((temp_address_ptr & 0xFF00) | ((temp_address_ptr + 1) & 0x00FF));
+                    if ((temp_address_ptr < 0x2000 || temp_address_ptr >= 0x4020) && (temp_address_ptr_to_low < 0x2000 || temp_address_ptr_to_low >= 0x4020)) {
+                        uint16_t temp_address = (uint16_t)(ReadByte(cpu, temp_address_ptr_to_low) << 8) | (uint16_t)ReadByte(cpu, temp_address_ptr);
+                      
+                        if ((x + 9) < w) {
+                            snprintf((row_buffer + x), 9, "  0x%04X", temp_address_ptr);
+                        } 
+                        x += 8;
+                    }
+                }
+            }
+            else if (instruction.address_mode == &IndirectX) {
+                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                    uint16_t temp_address_ptr = ReadLittleEndianWord(cpu, dummy_address);
+                    dummy_address += 2;
+
+                    if ((x + 13) < w) {
+                        snprintf((row_buffer + x), 13, " INX  0x%04X", temp_address_ptr);
+                    } 
+                    x += 12;
+                }
+            }
+            else if (instruction.address_mode == &IndirectY) {
+                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                    uint16_t temp_address_ptr = ReadLittleEndianWord(cpu, dummy_address);
+                    dummy_address += 2;
+
+                    if ((x + 13) < w) {
+                        snprintf((row_buffer + x), 13, " INY  0x%04X", temp_address_ptr);
+                    } 
+                    x += 12;
+                }
+            } else {
+                printf("unknown addressing mode\n");
+                free(row_buffer);
+                exit(1);
+            }
+        }
+
+        if (x >= w) {
+            // this means something didn't fit
+            printf("character buffer too thin\n");
+            free(row_buffer);
+            exit(1);
+        }
+        
+        row_buffer[x] = ' ';    // removes null terminator
+        memcpy(debug_char_buffer[y], row_buffer, w * sizeof(char));
+
+        if (cpu->registers.program_counter >= prev_dummy_address && cpu->registers.program_counter < dummy_address) {
+            active_row = y;
+        }
+
+        prev_dummy_address = dummy_address;
+    }
+    free(row_buffer);
+
+    return active_row;
+}
 
 
 //int main() {
