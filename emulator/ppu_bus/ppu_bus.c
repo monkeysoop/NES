@@ -1,4 +1,5 @@
 #include "ppu_bus.h"
+#include <stdio.h>
 
 void PPUBusInit(PPUBus* ppu_bus, Cartridge* cartridge) {
     ppu_bus->cartridge = cartridge;

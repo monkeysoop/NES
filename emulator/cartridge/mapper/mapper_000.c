@@ -1,5 +1,12 @@
+#include <stdio.h>
+
 #include "cartridge.h"
 
+
+uint8_t Mapper000ReadCPU(Cartridge* cartridge, uint16_t address);
+uint8_t Mapper000ReadPPU(Cartridge* cartridge, uint16_t address);
+void Mapper000WriteCPU(Cartridge* cartridge, uint16_t address, uint8_t data);
+void Mapper000WritePPU(Cartridge* cartridge, uint16_t address, uint8_t data);
 
 void Mapper000Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units) {
     if (prg_rom_16KB_units == 1) {
