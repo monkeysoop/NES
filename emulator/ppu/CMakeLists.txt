@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.22)
-project(ppu LANGUAGES C)
+project(PPU LANGUAGES C)
 set(C_STANDARD C11)
 
-add_library(${PROJECT_NAME} STATIC ppu.c ppu.h)
+
+add_library(${PROJECT_NAME} STATIC ppu.c)
+
+
+add_dependencies(${PROJECT_NAME} PPU_BUS)
+
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(${PROJECT_NAME} PUBLIC PPU_BUS)

@@ -11,18 +11,23 @@ add_custom_command(
 )
 
 
+add_subdirectory(emulator)
 
-add_executable(${PROJECT_NAME} main.c emulator.c emulator.h)
 
+add_executable(${PROJECT_NAME} main.c)
+
+
+add_dependencies(${PROJECT_NAME} EMULATOR)
 
 
 add_custom_target(
-    copy-test-directory ALL
+    copy-tests-directory ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/tests
     ${CMAKE_CURRENT_BINARY_DIR}/tests
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
-add_dependencies(${PROJECT_NAME} copy-test-directory)
+add_dependencies(${PROJECT_NAME} copy-tests-directory)
+
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)   # for sdl image
 
@@ -31,6 +36,7 @@ find_package(SDL2_image REQUIRED)
 
 include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
 
-target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} ${SDL2_IMAGE_LIBRARIES})
 
+target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_IMAGE_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE EMULATOR)
