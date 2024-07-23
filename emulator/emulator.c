@@ -6,7 +6,7 @@ void EmulatorInit(Emulator* emulator, const char* filename) {
     CPUInit(&emulator->cpu);
 
     PPUBusInit(&emulator->ppu_bus, &emulator->cartridge);
-    PPUInit(&emulator->ppu, &emulator->ppu_bus, &emulator->cpu, emulator->cartridge.tv_system);
+    PPUInit(&emulator->ppu, &emulator->ppu_bus, emulator->cartridge.tv_system);
     
     CPUBusInit(&emulator->cpu_bus, &emulator->cartridge, &emulator->ppu);
 }
@@ -49,7 +49,7 @@ void EmulatorTick(Emulator* emulator) {
                 PPUClockPAL(&emulator->ppu);
                 if (temp == 5) {
                     temp = 0;
-                    PPUClock(&emulator->ppu);
+                    PPUClockPAL(&emulator->ppu);
                 }
 
                 CPUClock(&emulator->cpu);
