@@ -34,7 +34,7 @@ typedef enum Mirroring {
     FOUR_SCREEN_MIRRORING,
 } Mirroring;
 
-typedef struct {
+typedef struct Cartridge {
     FileFormat format;
     TVSystem tv_system;
     Mirroring mirroring;
@@ -53,13 +53,13 @@ typedef struct {
 
     uint16_t mirroring_offsets[4];
 
-    uint8_t (*MapperReadCPU)(Cartridge*, uint16_t);
-    uint8_t (*MapperReadPPU)(Cartridge*, uint16_t);
+    uint8_t (*MapperReadCPU)(struct Cartridge*, uint16_t);
+    uint8_t (*MapperReadPPU)(struct Cartridge*, uint16_t);
     
-    void (*MapperWriteCPU)(Cartridge*, uint16_t, uint8_t);
-    void (*MapperWritePPU)(Cartridge*, uint16_t, uint8_t);
+    void (*MapperWriteCPU)(struct Cartridge*, uint16_t, uint8_t);
+    void (*MapperWritePPU)(struct Cartridge*, uint16_t, uint8_t);
 
-    void (*MapperScanlineIRQ)(Cartridge*);
+    void (*MapperScanlineIRQ)(struct Cartridge*);
 } Cartridge;
 
 void CartridgeInit(Cartridge* cartridge, const char* filename);
