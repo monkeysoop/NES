@@ -2,7 +2,7 @@
 #define CPU_BUS_H
 
 #include <stdint.h>
-#include <string.h>
+
 #include "cartridge.h"
 #include "ppu.h"
 

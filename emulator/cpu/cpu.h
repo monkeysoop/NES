@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-//#include "cpu_bus.h"
+#include "cpu_bus.h"
 
 #define STACK_POINTER_OFFSET 0xFD
 #define STACK_OFFSET 0x0100
@@ -39,7 +39,7 @@ typedef struct CPU {
 
     Registers registers;
 
-    //CPUBus* cpu_bus;
+    CPUBus* cpu_bus;
 } CPU;
 
 
