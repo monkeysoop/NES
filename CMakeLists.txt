@@ -16,6 +16,14 @@ add_executable(${PROJECT_NAME} main.c emulator.c emulator.h)
 
 
 
+add_custom_target(
+    copy-test-directory ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/tests
+    ${CMAKE_CURRENT_BINARY_DIR}/tests
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+add_dependencies(${PROJECT_NAME} copy-test-directory)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)   # for sdl image
 
 find_package(SDL2 REQUIRED)
