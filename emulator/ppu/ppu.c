@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <string.h>
+
 #include "ppu.h"
 
 static const uint32_t nes_palette_colors_rgba[64] = {
@@ -13,7 +16,7 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 
 
 
-void PPUInit(PPU* ppu, PPUBus* ppu_bus, CPU* cpu, TVSystem tv_system) {
+void PPUInit(PPU* ppu, PPUBus* ppu_bus, TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
     ppu->status_register = 0b10100000; // wiki says these bits are often set
@@ -39,7 +42,6 @@ void PPUInit(PPU* ppu, PPUBus* ppu_bus, CPU* cpu, TVSystem tv_system) {
     ppu->is_odd_frame = 0;
 
     ppu->ppu_bus = ppu_bus;
-    ppu->cpu = cpu;
 }
 
 void PPUReset(PPU* ppu, TVSystem tv_system) {
@@ -66,7 +68,8 @@ void PPUReset(PPU* ppu, TVSystem tv_system) {
 }
 
 
-void PPUClockNTSC(PPU* ppu) {
+bool PPUClockNTSC(PPU* ppu) {
+    bool interrupt_cpu = false;
     switch (ppu->render_state) {
         case RENDER: 
             if (ppu->cycle > 0 && ppu->cycle <= SCANLINE_VISIBLE_DOTS) {
@@ -164,7 +167,7 @@ void PPUClockNTSC(PPU* ppu) {
             if (ppu->cycle == 1 && ppu->scanline == NTSC_POST_RENDER_SCANLINE_END) {
                 ppu->status_register |= VERTICAL_BLANK_BIT;
                 if (ppu->ctrl_register & GENERATE_NMI_BIT) {
-                    CPUNonMaskableInterrupt(ppu->cpu);
+                    interrupt_cpu = true;
                 }
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {
                 ppu->scanline++;
@@ -205,6 +208,8 @@ void PPUClockNTSC(PPU* ppu) {
             break;
     }
     ppu->cycle++;
+
+    return interrupt_cpu;
 }
 
 

@@ -2,9 +2,9 @@
 #define PPU_H
 
 #include <stdint.h>
-#include <string.h>
+#include <stdbool.h>
+
 #include "ppu_bus.h"
-#include "cpu.h"
 
 #define BASE_NAMETABLE_BITS                  0b00000011
 #define VRAM_ADDRESS_INCREMENT_BIT           0b00000100
@@ -87,14 +87,13 @@ typedef struct PPU {
     uint8_t is_odd_frame;
 
     PPUBus* ppu_bus;
-    CPU* cpu;
 } PPU;
 
-void PPUInit(PPU* ppu, PPUBus* ppu_bus, CPU* cpu, TVSystem tv_system);
+void PPUInit(PPU* ppu, PPUBus* ppu_bus, TVSystem tv_system);
 void PPUReset(PPU* ppu, TVSystem tv_system);
 
-void PPUClockNTSC(PPU* ppu);
-void PPUClockPAL(PPU* ppu);
+bool PPUClockNTSC(PPU* ppu);
+bool PPUClockPAL(PPU* ppu);
 
 
 void PPUWriteCtrl(PPU* ppu, const uint8_t data);
