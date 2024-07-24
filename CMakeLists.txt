@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.22)
 project(NES LANGUAGES C)
 set(C_STANDARD C11)
 
+
+add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-value)
+
+
 add_custom_target(copy-font-png ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/font.png)
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/font.png
