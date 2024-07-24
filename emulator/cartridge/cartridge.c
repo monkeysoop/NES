@@ -49,7 +49,7 @@ void CartridgeInit(Cartridge* cartridge, const char* filename) {
         exit(1);
     }
 
-    if (header.name[0] != 0x4e || header.name[0] != 0x45 || header.name[0] != 0x53 || header.name[0] != 0x1a) {
+    if (header.name[0] != 0x4e || header.name[1] != 0x45 || header.name[2] != 0x53 || header.name[3] != 0x1a) {
         printf("Incorrect file format\n");
         fclose(cartridge_file);
         exit(1);
