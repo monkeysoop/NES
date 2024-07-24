@@ -1079,7 +1079,7 @@ void CPUInit(CPU* cpu) {
     SetIrgDisableFlagValue(cpu, 1);
 
     memset(memory, 0, 65536 * sizeof(uint8_t));
-    for (int i = 0; i < 65536 * sizeof(uint8_t); i++) {
+    for (int i = 0; i < 65536; i++) {
         memory[i] = rand() & 0xFF;
     } 
 
@@ -1328,7 +1328,7 @@ uint8_t CPUDisassemble(CPU* cpu, uint16_t start_address, uint16_t count, char** 
                         uint16_t temp_address = (uint16_t)(ReadByte(cpu, temp_address_ptr_to_low) << 8) | (uint16_t)ReadByte(cpu, temp_address_ptr);
                       
                         if ((x + 9) < w) {
-                            snprintf((row_buffer + x), 9, "  0x%04X", temp_address_ptr);
+                            snprintf((row_buffer + x), 9, "  0x%04X", temp_address);
                         } 
                         x += 8;
                     }
