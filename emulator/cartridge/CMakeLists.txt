@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 project(CARTRIDGE LANGUAGES C)
-set(C_STANDARD C11)
 
 
 add_subdirectory(mapper)

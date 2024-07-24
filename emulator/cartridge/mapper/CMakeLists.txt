@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 project(MAPPER LANGUAGES C)
-set(C_STANDARD C11)
 
 
 add_library(${PROJECT_NAME} mapper_000.c)

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(NES LANGUAGES C)
-set(C_STANDARD C11)
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 
 add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-value)
