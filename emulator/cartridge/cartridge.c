@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct {
+typedef union Header {
+    struct {
     uint8_t name[4];
 
     uint8_t prg_rom_16KB_units;
@@ -28,6 +29,8 @@ typedef struct {
 
     uint8_t unused[6];
 
+    };
+    uint8_t raw[16];
 } Header;
 
 
@@ -69,8 +72,8 @@ void CartridgeInit(Cartridge* cartridge, const char* filename) {
     } else if (header.nes_format_id & 0b01) {
         // Archaic iNES
         cartridge->format = ARCHAIC_iNES;
-    } else if (header.nes_format_id == 0b00 && header.unused[12] == 0 && header.unused[13] == 0 
-               && header.unused[14] == 0 && header.unused[15] == 0) {
+    } else if (header.nes_format_id == 0b00 && header.raw[12] == 0 && header.raw[13] == 0 
+               && header.raw[14] == 0 && header.raw[15] == 0) {
         // iNES
         cartridge->format = iNES;
     } else {
@@ -162,7 +165,7 @@ void CartridgeInit(Cartridge* cartridge, const char* filename) {
     }
 
     fclose(cartridge_file);
-    
+    printf("Successfully loaded: %s\n", filename);
     return;
 }
 
