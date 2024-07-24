@@ -212,6 +212,11 @@ bool PPUClockNTSC(PPU* ppu) {
     return interrupt_cpu;
 }
 
+bool PPUClockPAL(PPU* ppu) {
+    printf("PAL not implemented\n");
+    exit(1);
+}
+
 
 void PPUWriteCtrl(PPU* ppu, const uint8_t data) {
     ppu->ctrl_register = data;
