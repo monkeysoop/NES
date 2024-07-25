@@ -12,8 +12,8 @@
 #define FONT_CHARS_WIDTH 16
 #define FONT_CHARS_HEIGHT 16
 
-#define CHARS_WIDTH 16
-#define CHARS_HEIGHT 16
+#define CHARS_WIDTH 32
+#define CHARS_HEIGHT 64
 
 #define DEBUG_PADDING 10
 
@@ -146,7 +146,7 @@ void main_render(SDL_Renderer* main_renderer, SDL_Texture* main_texture, uint32_
 }
 
 
-void debug_render(SDL_Renderer* debug_renderer, SDL_Texture* debug_texture, SDL_Texture* font_texture, char* chars) {
+void debug_render(SDL_Renderer* debug_renderer, SDL_Texture* debug_texture, SDL_Texture* font_texture, char** chars) {
     SDL_SetRenderDrawColor(debug_renderer, 0x00, 0x00, 0x00, 0xFF);
     SDL_RenderClear(debug_renderer);
 
@@ -156,10 +156,10 @@ void debug_render(SDL_Renderer* debug_renderer, SDL_Texture* debug_texture, SDL_
 
     for (int y = 0; y < CHARS_HEIGHT; y++) {
         for (int x = 0; x < CHARS_WIDTH; x++) {
-            uint8_t c = (uint8_t)chars[y * CHARS_WIDTH + x];
+            uint8_t c = (uint8_t)chars[y][x];
 
-            uint8_t c_x = c % CHARS_WIDTH;
-            uint8_t c_y = c / (uint8_t)CHARS_WIDTH;
+            uint8_t c_x = c % FONT_CHARS_WIDTH;
+            uint8_t c_y = c / (uint8_t)FONT_CHARS_WIDTH;
 
             SDL_Rect char_rect = {.x=(c_x * FONT_CHAR_SIZE), .y=(c_y * FONT_CHAR_SIZE), .w=FONT_CHAR_SIZE, .h=FONT_CHAR_SIZE};
             SDL_Rect target_rect = {.x =(x * FONT_CHAR_SIZE), .y=(y * FONT_CHAR_SIZE), .w=FONT_CHAR_SIZE, .h=FONT_CHAR_SIZE};
@@ -203,6 +203,11 @@ void render(uint32_t* pixels) {
 
 int main(int argc, char** argv)
 {
+    if (argc != 2) {
+        printf("please pass the name of the rom file (xxx.nes) as first parameter\n");
+        exit(1);
+    }
+
 
     SDL_LogSetPriority(SDL_LOG_CATEGORY_ERROR, SDL_LOG_PRIORITY_ERROR);
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
@@ -222,14 +227,19 @@ int main(int argc, char** argv)
 
     init(&main_window, &main_renderer, &main_texture, &debug_window, &debug_renderer, &debug_texture, &font_texture);
     
+    Emulator emulator;
+    EmulatorInit(&emulator, argv[1]);
     
 
     uint32_t* pixels = malloc(NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT * sizeof(uint32_t));
     memset(pixels, 0, NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT * sizeof(uint32_t));
 
 
-    char* chars = malloc(CHARS_WIDTH * CHARS_HEIGHT * sizeof(char));
-    memset(chars, '\0', CHARS_WIDTH * CHARS_HEIGHT * sizeof(char));
+    char** chars = malloc(CHARS_HEIGHT * sizeof(char*));
+    for (int i = 0; i < CHARS_HEIGHT; i++) {
+        chars[i] = malloc(CHARS_WIDTH * sizeof(char));
+        memset(chars[i], '\0', CHARS_WIDTH * sizeof(char));
+    }
 
 
     SDL_HideWindow(debug_window);
@@ -310,6 +320,9 @@ int main(int argc, char** argv)
         }
 
         if (debug_shown) {
+            uint16_t pc = emulator.cpu.registers.program_counter;
+            uint16_t start_address = (pc >= (CHARS_HEIGHT / 2)) ? (pc - (CHARS_HEIGHT / 2)) : pc;
+            CPUDisassemble(&(emulator.cpu), start_address, CHARS_HEIGHT, chars, CHARS_WIDTH, CHARS_HEIGHT);
             debug_render(debug_renderer, debug_texture, font_texture, chars);
         }
 
@@ -325,6 +338,10 @@ int main(int argc, char** argv)
 		}
 	}
 
+    
+    for (int i = 0; i < CHARS_HEIGHT; i++) {
+        free(chars[i]);
+    }
     free(chars);
     free(pixels);
     clean(main_window, main_renderer, main_texture, debug_window, debug_renderer, debug_texture, font_texture);
