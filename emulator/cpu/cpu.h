@@ -43,7 +43,7 @@ struct CPU {
 };
 
 
-void CPUInit(struct CPU* cpu);
+void CPUInit(struct CPU* cpu, struct CPUBus* cpu_bus);
 void CPUReset(struct CPU* cpu);
 
 void CPUInterruptRequest(struct CPU* cpu);

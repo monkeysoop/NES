@@ -6,7 +6,7 @@ void EmulatorInit(struct Emulator* emulator, const char* filename) {
     PPUBusInit(&emulator->ppu_bus, &emulator->cartridge);
     PPUInit(&emulator->ppu, &emulator->ppu_bus, emulator->cartridge.tv_system);
     CPUBusInit(&emulator->cpu_bus, &emulator->cartridge, &emulator->ppu);
-    CPUInit(&emulator->cpu);
+    CPUInit(&emulator->cpu, &emulator->cpu_bus);
 }
 
 void EmulatorClean(struct Emulator* emulator) {

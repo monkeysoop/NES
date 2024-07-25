@@ -1059,7 +1059,9 @@ static const Instruction instructions[256] = {
 
 
 
-void CPUInit(struct CPU* cpu) {
+void CPUInit(struct CPU* cpu, struct CPUBus* cpu_bus) {
+    cpu->cpu_bus = cpu_bus;
+
     // registers
     cpu->registers.a_register = 0;
 	cpu->registers.x_register = 0; 
@@ -1067,8 +1069,7 @@ void CPUInit(struct CPU* cpu) {
     cpu->registers.status_flags = 0;
     cpu->registers.stack_pointer = STACK_POINTER_OFFSET; 
 
-	//cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
-	cpu->registers.program_counter = ReadByte(cpu, RESET_OFFSET);
+	cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
 
     cpu->remaining_cycles = 0;
     cpu->tick_counter = 0;
