@@ -4,7 +4,7 @@
 #include "cpu_bus.h"
 
 
-void CPUBusInit(CPUBus* cpu_bus, Cartridge* cartridge, PPU* ppu) {
+void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu) {
     memset(cpu_bus->cpu_ram, 0x00, CPU_RAM_SIZE * sizeof(uint8_t));
 
     cpu_bus->cpu_open_bus_data = 0x00;
@@ -14,7 +14,7 @@ void CPUBusInit(CPUBus* cpu_bus, Cartridge* cartridge, PPU* ppu) {
     cpu_bus->ppu = ppu;
 }
 
-void CPUBusReset(CPUBus* cpu_bus) {
+void CPUBusReset(struct CPUBus* cpu_bus) {
     memset(cpu_bus->cpu_ram, 0x00, CPU_RAM_SIZE * sizeof(uint8_t));
 
     cpu_bus->cpu_open_bus_data = 0x00;
@@ -22,7 +22,7 @@ void CPUBusReset(CPUBus* cpu_bus) {
 }
 
 
-uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address) {
+uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
     if (address < 0x2000) {
         cpu_bus->cpu_open_bus_data = cpu_bus->cpu_ram[(address & 0x07FF)];
     } else if (address < 0x4000) {
@@ -65,7 +65,7 @@ uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address) {
     return cpu_bus->cpu_open_bus_data;
 }
 
-void CPUBusWrite(CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
+void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
     cpu_bus->cpu_open_bus_data = data;
 
     if (address < 0x2000) {

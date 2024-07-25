@@ -34,7 +34,7 @@ typedef enum Mirroring {
     FOUR_SCREEN_MIRRORING,
 } Mirroring;
 
-typedef struct Cartridge {
+struct Cartridge {
     FileFormat format;
     TVSystem tv_system;
     Mirroring mirroring;
@@ -60,23 +60,23 @@ typedef struct Cartridge {
     void (*MapperWritePPU)(struct Cartridge*, uint16_t, uint8_t);
 
     void (*MapperScanlineIRQ)(struct Cartridge*);
-} Cartridge;
+};
 
-void CartridgeInit(Cartridge* cartridge, const char* filename);
-void CartridgeClean(Cartridge* cartridge);
+void CartridgeInit(struct Cartridge* cartridge, const char* filename);
+void CartridgeClean(struct Cartridge* cartridge);
 
-void CartridgeScanlineIRQ(Cartridge* cartridge);
-void CartridgeSetMirroring(Cartridge* cartridge, Mirroring mirroring);
+void CartridgeScanlineIRQ(struct Cartridge* cartridge);
+void CartridgeSetMirroring(struct Cartridge* cartridge, Mirroring mirroring);
 
-uint8_t CartridgeReadCPU(Cartridge* cartridge, const uint16_t address);
-uint8_t CartridgeReadPPU(Cartridge* cartridge, const uint16_t address);
-void CartridgeWriteCPU(Cartridge* cartridge, const uint16_t address, const uint8_t value);
-void CartridgeWritePPU(Cartridge* cartridge, const uint16_t address, const uint8_t value);
+uint8_t CartridgeReadCPU(struct Cartridge* cartridge, const uint16_t address);
+uint8_t CartridgeReadPPU(struct Cartridge* cartridge, const uint16_t address);
+void CartridgeWriteCPU(struct Cartridge* cartridge, const uint16_t address, const uint8_t value);
+void CartridgeWritePPU(struct Cartridge* cartridge, const uint16_t address, const uint8_t value);
 
 
-void Mapper000Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
-void Mapper001Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
-void Mapper002Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
-void Mapper003Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
+void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
+void Mapper001Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
+void Mapper002Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
+void Mapper003Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
 
 #endif

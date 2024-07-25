@@ -3,12 +3,12 @@
 #include "cartridge.h"
 
 
-uint8_t Mapper000ReadCPU(Cartridge* cartridge, uint16_t address);
-uint8_t Mapper000ReadPPU(Cartridge* cartridge, uint16_t address);
-void Mapper000WriteCPU(Cartridge* cartridge, uint16_t address, uint8_t data);
-void Mapper000WritePPU(Cartridge* cartridge, uint16_t address, uint8_t data);
+uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address);
+uint8_t Mapper000ReadPPU(struct Cartridge* cartridge, uint16_t address);
+void Mapper000WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
+void Mapper000WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
 
-void Mapper000Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units) {
+void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units) {
     if (prg_rom_16KB_units == 1) {
         cartridge->cpu_address_mask = 0x7FFF;
     } else {
@@ -23,21 +23,22 @@ void Mapper000Init(Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg
     cartridge->MapperScanlineIRQ = NULL;
 }
 
-uint8_t Mapper000ReadCPU(Cartridge* cartridge, uint16_t address) {
+uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address) {
+    printf("address: 0x%04X\n", address);
     return (cartridge->prg_rom[(address - 0x8000) & cartridge->cpu_address_mask]);
 }
 
-uint8_t Mapper000ReadPPU(Cartridge* cartridge, uint16_t address) {
+uint8_t Mapper000ReadPPU(struct Cartridge* cartridge, uint16_t address) {
     return cartridge->chr_rom[address];
 }
 
 
-void Mapper000WriteCPU(Cartridge* cartridge, uint16_t address, uint8_t data) {
+void Mapper000WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     printf("Attempted write to prg rom on mapper 000\n");
     exit(1);
 }
 
-void Mapper000WritePPU(Cartridge* cartridge, uint16_t address, uint8_t data) {
+void Mapper000WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     printf("Attempted write to chr rom on mapper 000 (some games can have chr rams but it's not supported)\n");
     exit(1);
 }

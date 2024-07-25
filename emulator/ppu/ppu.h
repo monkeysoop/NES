@@ -50,17 +50,17 @@
 #define SCANLINE_IRQ_CYCLE 260
 #define SCANLINE_LAST_CYCLE 340
 
-typedef enum RenderState {
+enum RenderState {
     RENDER,
     POST_RENDER,
     VERTICAL_BLANKING,
     PRE_RENDER,
     FINISHED,
-} RenderState;
+};
 
 
 
-typedef struct PPU {
+struct PPU {
     uint8_t ctrl_register;
     uint8_t mask_register;
     uint8_t status_register;
@@ -80,34 +80,34 @@ typedef struct PPU {
 
     uint8_t OAM[256];
 
-    RenderState render_state;
+    enum RenderState render_state;
     uint16_t scanline;
     uint16_t cycle;
 
     uint8_t is_odd_frame;
 
-    PPUBus* ppu_bus;
-} PPU;
+    struct PPUBus* ppu_bus;
+};
 
-void PPUInit(PPU* ppu, PPUBus* ppu_bus, TVSystem tv_system);
-void PPUReset(PPU* ppu, TVSystem tv_system);
+void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, TVSystem tv_system);
+void PPUReset(struct PPU* ppu, TVSystem tv_system);
 
-bool PPUClockNTSC(PPU* ppu);
-bool PPUClockPAL(PPU* ppu);
+bool PPUClockNTSC(struct PPU* ppu);
+bool PPUClockPAL(struct PPU* ppu);
 
 
-void PPUWriteCtrl(PPU* ppu, const uint8_t data);
-void PPUWriteMask(PPU* ppu, const uint8_t data);
-void PPUWriteOAMAddress(PPU* ppu, const uint8_t data);
-void PPUWriteOAMData(PPU* ppu, const uint8_t data);
-void PPUWriteScroll(PPU* ppu, const uint8_t data);
-void PPUWritePPUAddress(PPU* ppu, const uint8_t data);
-void PPUWritePPUData(PPU* ppu, const uint8_t data);
-void PPUWriteDMAAddress(PPU* ppu, const uint8_t data);
+void PPUWriteCtrl(struct PPU* ppu, const uint8_t data);
+void PPUWriteMask(struct PPU* ppu, const uint8_t data);
+void PPUWriteOAMAddress(struct PPU* ppu, const uint8_t data);
+void PPUWriteOAMData(struct PPU* ppu, const uint8_t data);
+void PPUWriteScroll(struct PPU* ppu, const uint8_t data);
+void PPUWritePPUAddress(struct PPU* ppu, const uint8_t data);
+void PPUWritePPUData(struct PPU* ppu, const uint8_t data);
+void PPUWriteDMAAddress(struct PPU* ppu, const uint8_t data);
 
-uint8_t PPUReadStatus(PPU* ppu);
-uint8_t PPUReadOAMData(PPU* ppu);
-uint8_t PPUReadPPUData(PPU* ppu);
+uint8_t PPUReadStatus(struct PPU* ppu);
+uint8_t PPUReadOAMData(struct PPU* ppu);
+uint8_t PPUReadPPUData(struct PPU* ppu);
 
 
 

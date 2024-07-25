@@ -24,33 +24,33 @@
 #define OVERFLOW 0b01000000
 #define NEGATIVE 0b10000000
 
-typedef struct Registers {
+struct Registers {
     uint8_t a_register;
 	uint8_t x_register; 
 	uint8_t y_register;   
     uint8_t status_flags;
     uint8_t stack_pointer; 
 	uint16_t program_counter;
-} Registers;
+};
 
-typedef struct CPU {
+struct CPU {
     uint8_t remaining_cycles;
     uint64_t tick_counter;
 
-    Registers registers;
+    struct Registers registers;
 
-    CPUBus* cpu_bus;
-} CPU;
+    struct CPUBus* cpu_bus;
+};
 
 
-void CPUInit(CPU* cpu);
-void CPUReset(CPU* cpu);
+void CPUInit(struct CPU* cpu);
+void CPUReset(struct CPU* cpu);
 
-void CPUInterruptRequest(CPU* cpu);
-void CPUNonMaskableInterrupt(CPU* cpu);
+void CPUInterruptRequest(struct CPU* cpu);
+void CPUNonMaskableInterrupt(struct CPU* cpu);
 
-void CPUClock(CPU* cpu);
+void CPUClock(struct CPU* cpu);
 
-uint8_t CPUDisassemble(CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h);
+uint8_t CPUDisassemble(struct CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h);
 
 #endif

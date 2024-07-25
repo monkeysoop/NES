@@ -57,22 +57,22 @@
 
 
 
-typedef struct CPUBus {
+struct CPUBus {
     uint8_t cpu_ram[CPU_RAM_SIZE];
 
     uint8_t cpu_open_bus_data;
     uint8_t ppu_io_open_bus_data;
 
-    Cartridge* cartridge;
-    PPU* ppu;
+    struct Cartridge* cartridge;
+    struct PPU* ppu;
     
-} CPUBus;
+};
 
-void CPUBusInit(CPUBus* cpu_bus, Cartridge* cartridge, PPU* ppu);
-void CPUBusReset(CPUBus* cpu_bus);
+void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu);
+void CPUBusReset(struct CPUBus* cpu_bus);
 
 
-uint8_t CPUBusRead(CPUBus* cpu_bus, const uint16_t address);
-void CPUBusWrite(CPUBus* cpu_bus, const uint16_t address, const uint8_t data);
+uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address);
+void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data);
 
 #endif

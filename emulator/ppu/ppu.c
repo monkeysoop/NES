@@ -16,7 +16,7 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 
 
 
-void PPUInit(PPU* ppu, PPUBus* ppu_bus, TVSystem tv_system) {
+void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
     ppu->status_register = 0b10100000; // wiki says these bits are often set
@@ -44,7 +44,7 @@ void PPUInit(PPU* ppu, PPUBus* ppu_bus, TVSystem tv_system) {
     ppu->ppu_bus = ppu_bus;
 }
 
-void PPUReset(PPU* ppu, TVSystem tv_system) {
+void PPUReset(struct PPU* ppu, TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
     ppu->status_register = ppu->status_register & 0b10000000;
@@ -68,7 +68,7 @@ void PPUReset(PPU* ppu, TVSystem tv_system) {
 }
 
 
-bool PPUClockNTSC(PPU* ppu) {
+bool PPUClockNTSC(struct PPU* ppu) {
     bool interrupt_cpu = false;
     switch (ppu->render_state) {
         case RENDER: 
@@ -212,33 +212,33 @@ bool PPUClockNTSC(PPU* ppu) {
     return interrupt_cpu;
 }
 
-bool PPUClockPAL(PPU* ppu) {
+bool PPUClockPAL(struct PPU* ppu) {
     printf("PAL not implemented\n");
     exit(1);
 }
 
 
-void PPUWriteCtrl(PPU* ppu, const uint8_t data) {
+void PPUWriteCtrl(struct PPU* ppu, const uint8_t data) {
     ppu->ctrl_register = data;
 
     ppu->t &= ~((uint16_t)BASE_NAMETABLE_BITS << 10);
     ppu->t |= (ppu->ctrl_register & BASE_NAMETABLE_BITS) << 10;
 }
 
-void PPUWriteMask(PPU* ppu, const uint8_t data) {
+void PPUWriteMask(struct PPU* ppu, const uint8_t data) {
     ppu->mask_register = data;
 }
 
-void PPUWriteOAMAddress(PPU* ppu, const uint8_t data) {
+void PPUWriteOAMAddress(struct PPU* ppu, const uint8_t data) {
     ppu->oam_address_register = data;
 }
 
-void PPUWriteOAMData(PPU* ppu, const uint8_t data) {
+void PPUWriteOAMData(struct PPU* ppu, const uint8_t data) {
     ppu->OAM[ppu->oam_address_register] = data;
     ppu->oam_address_register++;
 }
 
-void PPUWriteScroll(PPU* ppu, const uint8_t data) {
+void PPUWriteScroll(struct PPU* ppu, const uint8_t data) {
     if (ppu->w) {
         // 2. write
         ppu->t &= 0b1000110000011111;
@@ -254,7 +254,7 @@ void PPUWriteScroll(PPU* ppu, const uint8_t data) {
     }
 }
 
-void PPUWritePPUAddress(PPU* ppu, const uint8_t data) {
+void PPUWritePPUAddress(struct PPU* ppu, const uint8_t data) {
     if (ppu->w) {
         // 2. write
         ppu->t &= 0xFF00;
@@ -269,29 +269,29 @@ void PPUWritePPUAddress(PPU* ppu, const uint8_t data) {
     }
 }
 
-void PPUWritePPUData(PPU* ppu, const uint8_t data) {
+void PPUWritePPUData(struct PPU* ppu, const uint8_t data) {
     PPUBusWrite(ppu->ppu_bus, ppu->v, data);
     ppu->v += ((ppu->ctrl_register & VRAM_ADDRESS_INCREMENT_BIT) ? 32 : 1);
 }
 
-void PPUWriteDMAAddress(PPU* ppu, const uint8_t data) {
+void PPUWriteDMAAddress(struct PPU* ppu, const uint8_t data) {
     printf("dma not implemented\n");
     exit(1);
 }
 
 
-uint8_t PPUReadStatus(PPU* ppu) {
+uint8_t PPUReadStatus(struct PPU* ppu) {
     uint8_t temp = ppu->status_register;
     ppu->w = 0;
     ppu->status_register &= ~VERTICAL_BLANK_BIT;
     return temp;
 }
 
-uint8_t PPUReadOAMData(PPU* ppu) {
+uint8_t PPUReadOAMData(struct PPU* ppu) {
     return ppu->OAM[ppu->oam_address_register];
 }
 
-uint8_t PPUReadPPUData(PPU* ppu) {
+uint8_t PPUReadPPUData(struct PPU* ppu) {
     uint8_t temp = ppu->ppu_data_buffer;
     ppu->ppu_data_buffer = PPUBusRead(ppu->ppu_bus, ppu->v);
     if (ppu->v >= 0x3F00) {

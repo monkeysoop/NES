@@ -10,18 +10,18 @@
 #define PALETTE_RAM_SIZE 0x20   // 32 bytes
 
 
-typedef struct PPUBus {
+struct PPUBus {
     uint8_t palette[PALETTE_RAM_SIZE];
     
-    Cartridge* cartridge;
-} PPUBus;
+    struct Cartridge* cartridge;
+};
 
-void PPUBusInit(PPUBus* ppu_bus, Cartridge* cartridge);
-void PPUBusReset(PPUBus* ppu_bus);
+void PPUBusInit(struct PPUBus* ppu_bus, struct Cartridge* cartridge);
+void PPUBusReset(struct PPUBus* ppu_bus);
 
-void PPUBusScanlineIRQ(PPUBus* ppu_bus);
+void PPUBusScanlineIRQ(struct PPUBus* ppu_bus);
 
-uint8_t PPUBusRead(PPUBus* ppu_bus, const uint16_t address);
-void PPUBusWrite(PPUBus* ppu_bus, const uint16_t address, const uint8_t data);
+uint8_t PPUBusRead(struct PPUBus* ppu_bus, const uint16_t address);
+void PPUBusWrite(struct PPUBus* ppu_bus, const uint16_t address, const uint8_t data);
 
 #endif

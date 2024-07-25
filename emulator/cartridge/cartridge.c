@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef union Header {
+union Header {
     struct {
     uint8_t name[4];
 
@@ -31,12 +31,12 @@ typedef union Header {
 
     };
     uint8_t raw[16];
-} Header;
+};
 
 
 
 
-void CartridgeInit(Cartridge* cartridge, const char* filename) {
+void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
     FILE* cartridge_file = fopen(filename, "r");
     
     if (cartridge_file == NULL) {
@@ -44,8 +44,8 @@ void CartridgeInit(Cartridge* cartridge, const char* filename) {
         exit(1);
     }
 
-    Header header;
-    size_t ret = fread(&header, sizeof(Header), 1, cartridge_file);
+    union Header header;
+    size_t ret = fread(&header, sizeof(union Header), 1, cartridge_file);
     if (ret != 1) {
         printf("Failed to read header\n");
         fclose(cartridge_file);
@@ -170,7 +170,7 @@ void CartridgeInit(Cartridge* cartridge, const char* filename) {
 }
 
 
-void CartridgeClean(Cartridge* cartridge) {
+void CartridgeClean(struct Cartridge* cartridge) {
     free(cartridge->prg_rom);
     free(cartridge->chr_rom);
     if (cartridge->prg_ram_8KB_units != 0) {
@@ -178,13 +178,13 @@ void CartridgeClean(Cartridge* cartridge) {
     }
 }
 
-void CartridgeScanlineIRQ(Cartridge* cartridge) {
+void CartridgeScanlineIRQ(struct Cartridge* cartridge) {
     if (cartridge->mapper_id == MMC3) {
         cartridge->MapperScanlineIRQ(cartridge);
     }
 }
 
-void CartridgeSetMirroring(Cartridge* cartridge, Mirroring mirroring) {
+void CartridgeSetMirroring(struct Cartridge* cartridge, Mirroring mirroring) {
     switch (mirroring) {
         case VERTICAL_MIRRORING: 
             cartridge->mirroring_offsets[0] = 0x0;
@@ -229,19 +229,19 @@ void CartridgeSetMirroring(Cartridge* cartridge, Mirroring mirroring) {
 }
 
 
-uint8_t CartridgeReadCPU(Cartridge* cartridge, const uint16_t address) {
+uint8_t CartridgeReadCPU(struct Cartridge* cartridge, const uint16_t address) {
     return cartridge->MapperReadCPU(cartridge, address);
 }
 
-uint8_t CartridgeReadPPU(Cartridge* cartridge, const uint16_t address) {
+uint8_t CartridgeReadPPU(struct Cartridge* cartridge, const uint16_t address) {
     return cartridge->MapperReadPPU(cartridge, address);
 }
 
 
-void CartridgeWriteCPU(Cartridge* cartridge, const uint16_t address, const uint8_t value) {
+void CartridgeWriteCPU(struct Cartridge* cartridge, const uint16_t address, const uint8_t value) {
     cartridge->MapperWriteCPU(cartridge, address, value);
 }
 
-void CartridgeWritePPU(Cartridge* cartridge, const uint16_t address, const uint8_t value) {
+void CartridgeWritePPU(struct Cartridge* cartridge, const uint16_t address, const uint8_t value) {
     cartridge->MapperWritePPU(cartridge, address, value);
 }

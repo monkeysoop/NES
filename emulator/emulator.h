@@ -7,22 +7,22 @@
 #include "ppu.h"
 #include "ppu_bus.h"
 
-typedef struct Emulator {
-    Cartridge cartridge; 
-    CPU cpu; 
-    CPUBus cpu_bus; 
-    PPU ppu; 
-    PPUBus ppu_bus;
-} Emulator;
+struct Emulator {
+    struct Cartridge cartridge; 
+    struct CPU cpu; 
+    struct CPUBus cpu_bus; 
+    struct PPU ppu; 
+    struct PPUBus ppu_bus;
+};
 
 
-void EmulatorInit(Emulator* emulator, const char* filename);
-void EmulatorClean(Emulator* emulator);
+void EmulatorInit(struct Emulator* emulator, const char* filename);
+void EmulatorClean(struct Emulator* emulator);
 
-void EmulatorReset(Emulator* emulator);
+void EmulatorReset(struct Emulator* emulator);
 
-void EmulatorReloadCartridge(Emulator* emulator, const char* filename);
+void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename);
 
-void EmulatorTick(Emulator* emulator);
+void EmulatorTick(struct Emulator* emulator);
 
 #endif
