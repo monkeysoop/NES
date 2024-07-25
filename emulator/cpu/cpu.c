@@ -1,159 +1,156 @@
 #include "cpu.h"
 #include <string.h>
 
-uint8_t memory[65536];
+//uint8_t memory[65536];
 
 
 
 
-static inline uint8_t GetCarryFlag(CPU* cpu) {
+static inline uint8_t GetCarryFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & CARRY;
 }
-static inline uint8_t GetZeroFlag(CPU* cpu) {
+static inline uint8_t GetZeroFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & ZERO;
 }
-static inline uint8_t GetIrqDisableFlag(CPU* cpu) {
+static inline uint8_t GetIrqDisableFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & IRQ_DISABLE;
 }
-static inline uint8_t GetDecimalModeFlag(CPU* cpu) {
+static inline uint8_t GetDecimalModeFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & DECIMAL_MODE;
 }
-static inline uint8_t GetBrkCommandFlag(CPU* cpu) {
+static inline uint8_t GetBrkCommandFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & BRK_COMMAND;
 }
-static inline uint8_t GetUnusedFlag(CPU* cpu) {
+static inline uint8_t GetUnusedFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & UNUSED;
 }
-static inline uint8_t GetOverflowFlag(CPU* cpu) {
+static inline uint8_t GetOverflowFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & OVERFLOW;
 }
-static inline uint8_t GetNegativeFlag(CPU* cpu) {
+static inline uint8_t GetNegativeFlag(struct CPU* cpu) {
     return cpu->registers.status_flags & NEGATIVE;
 }
 
 
 
-static inline uint8_t GetCarryFlagValue(CPU* cpu) {
+static inline uint8_t GetCarryFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & CARRY) ? 1 : 0);
 }
-static inline uint8_t GetZeroFlagValue(CPU* cpu) {
+static inline uint8_t GetZeroFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & ZERO) ? 1 : 0);
 }
-static inline uint8_t GetIrqDisableFlagValue(CPU* cpu) {
+static inline uint8_t GetIrqDisableFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & IRQ_DISABLE) ? 1 : 0);
 }
-static inline uint8_t GetDecimalModeFlagValue(CPU* cpu) {
+static inline uint8_t GetDecimalModeFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & DECIMAL_MODE) ? 1 : 0);
 }
-static inline uint8_t GetBrkCommandFlagValue(CPU* cpu) {
+static inline uint8_t GetBrkCommandFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & BRK_COMMAND) ? 1 : 0);
 }
-static inline uint8_t GetUnusedFlagValue(CPU* cpu) {
+static inline uint8_t GetUnusedFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & UNUSED) ? 1 : 0);
 }
-static inline uint8_t GetOverflowFlagValue(CPU* cpu) {
+static inline uint8_t GetOverflowFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & OVERFLOW) ? 1 : 0);
 }
-static inline uint8_t GetNegativeFlagValue(CPU* cpu) {
+static inline uint8_t GetNegativeFlagValue(struct CPU* cpu) {
     return ((cpu->registers.status_flags & NEGATIVE) ? 1 : 0);
 }
 
 
 
-static inline void SetCarryFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetCarryFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= CARRY) : (cpu->registers.status_flags &= (~CARRY));    
     return;
 }
-
-
-
-static inline void SetZeroFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetZeroFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= ZERO) : (cpu->registers.status_flags &= (~ZERO));    
     return;
 }
-static inline void SetIrgDisableFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetIrgDisableFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= IRQ_DISABLE) : (cpu->registers.status_flags &= (~IRQ_DISABLE));    
     return;
 }
-static inline void SetDecimalModeFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetDecimalModeFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= DECIMAL_MODE) : (cpu->registers.status_flags &= (~DECIMAL_MODE));    
     return;
 }
-static inline void SetBrkCommandFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetBrkCommandFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= BRK_COMMAND) : (cpu->registers.status_flags &= (~BRK_COMMAND));    
     return;
 }
-static inline void SetUnusedFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetUnusedFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= UNUSED) : (cpu->registers.status_flags &= (~UNUSED));    
     return;
 }
-static inline void SetOverflowFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetOverflowFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= OVERFLOW) : (cpu->registers.status_flags &= (~OVERFLOW));    
     return;
 }
-static inline void SetNegativeFlagValue(CPU* cpu, const uint8_t value) {
+static inline void SetNegativeFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= NEGATIVE) : (cpu->registers.status_flags &= (~NEGATIVE));    
     return;
 }
 
 
 
-static inline void SetAllFlags(CPU* cpu) {
+static inline void SetAllFlags(struct CPU* cpu) {
     cpu->registers.status_flags = 0xFF;
 }
-static inline void ClearAllFlags(CPU* cpu) {
+static inline void ClearAllFlags(struct CPU* cpu) {
     cpu->registers.status_flags = 0x00;
 }
 
 
 
-static inline uint8_t ReadByte(CPU* cpu, const uint16_t address) {
-    return memory[address];
-    //return ReadCPUBus(cpu->cpu_bus, address);
+static inline uint8_t ReadByte(struct CPU* cpu, const uint16_t address) {
+    //return memory[address];
+    return CPUBusRead(cpu->cpu_bus, address);
 }
-static inline void WriteByte(CPU* cpu, const uint16_t address, const uint8_t data) {
-    memory[address] = data;
-    //WriteCPUBus(cpu->cpu_bus, address, data);
+static inline void WriteByte(struct CPU* cpu, const uint16_t address, const uint8_t data) {
+    //memory[address] = data;
+    CPUBusWrite(cpu->cpu_bus, address, data);
 }
 
-static inline uint16_t ReadBigEndianWord(CPU* cpu, const uint16_t address_start) {
+static inline uint16_t ReadBigEndianWord(struct CPU* cpu, const uint16_t address_start) {
     return (ReadByte(cpu, address_start) << 8) | ReadByte(cpu, (address_start + 1));
 } 
-static inline uint16_t ReadLittleEndianWord(CPU* cpu, const uint16_t address_start) {
+static inline uint16_t ReadLittleEndianWord(struct CPU* cpu, const uint16_t address_start) {
     return ReadByte(cpu, address_start) | (ReadByte(cpu, (address_start + 1)) << 8);
 }
-static inline void WriteBigEndianWord(CPU* cpu, const uint16_t address, const uint16_t data) {
+static inline void WriteBigEndianWord(struct CPU* cpu, const uint16_t address, const uint16_t data) {
     WriteByte(cpu, address, (data >> 8));
     WriteByte(cpu, (address + 1), (data & 0xFF));
 }
-static inline void WriteLittleEndianWord(CPU* cpu, const uint16_t address, const uint16_t data) {
+static inline void WriteLittleEndianWord(struct CPU* cpu, const uint16_t address, const uint16_t data) {
     WriteByte(cpu, address, (data & 0xFF));
     WriteByte(cpu, (address + 1), (data >> 8));
 }
 
 
 
-static inline uint8_t StackPullByte(CPU* cpu) {
+static inline uint8_t StackPullByte(struct CPU* cpu) {
     cpu->registers.stack_pointer++;
     return ReadByte(cpu, (STACK_OFFSET + cpu->registers.stack_pointer));
 }
-static inline void StackPushByte(CPU* cpu, const uint8_t data) {
+static inline void StackPushByte(struct CPU* cpu, const uint8_t data) {
     WriteByte(cpu, (STACK_OFFSET + cpu->registers.stack_pointer), data);
     cpu->registers.stack_pointer--;
 }
 
-static inline uint16_t StackPullBigEndianWord(CPU* cpu) {
+static inline uint16_t StackPullBigEndianWord(struct CPU* cpu) {
     return (StackPullByte(cpu) << 8) | StackPullByte(cpu);
 } 
-static inline uint16_t StackPullLittleEndianWord(CPU* cpu) {
+static inline uint16_t StackPullLittleEndianWord(struct CPU* cpu) {
     return StackPullByte(cpu) | (StackPullByte(cpu) << 8);
 }
-static inline void StackPushBigEndianWord(CPU* cpu, uint16_t data) {
+static inline void StackPushBigEndianWord(struct CPU* cpu, uint16_t data) {
     // 6502 stack goes from higher address to lower (right to left)
     StackPushByte(cpu, (data & 0xFF));
     StackPushByte(cpu, (data >> 8));
 }
-static inline void StackPushLittleEndianWord(CPU* cpu, uint16_t data) {
+static inline void StackPushLittleEndianWord(struct CPU* cpu, uint16_t data) {
     // 6502 stack goes from higher address to lower (right to left)
     StackPushByte(cpu, (data >> 8));
     StackPushByte(cpu, (data & 0xFF));
@@ -164,42 +161,42 @@ static inline void StackPushLittleEndianWord(CPU* cpu, uint16_t data) {
 
 
 
-static uint16_t IlligalMode(CPU* cpu) {
+static uint16_t IlligalMode(struct CPU* cpu) {
     printf("illigal addressing mode\n");
     exit(1);
     return 0;
 }
-static uint16_t Accumulator(CPU* cpu) {
+static uint16_t Accumulator(struct CPU* cpu) {
     return 0;   // not used because Accumulator addressing takes no value from memory 
 }
-static uint16_t Implied(CPU* cpu) {
+static uint16_t Implied(struct CPU* cpu) {
 	return 0;   // not used because Implied addressing takes no value from memory 
 }
-static uint16_t Immediate(CPU* cpu) {
+static uint16_t Immediate(struct CPU* cpu) {
 	uint16_t absolute_address = cpu->registers.program_counter;
     cpu->registers.program_counter++;
 
 	return absolute_address;
 }
-static uint16_t ZeroPage(CPU* cpu) {
+static uint16_t ZeroPage(struct CPU* cpu) {
 	uint16_t absolute_address = (uint16_t)ReadByte(cpu, cpu->registers.program_counter);	
 	cpu->registers.program_counter++;
 
 	return absolute_address;
 }
-static uint16_t ZeroPageX(CPU* cpu) {
+static uint16_t ZeroPageX(struct CPU* cpu) {
 	uint16_t absolute_address = ((uint16_t)ReadByte(cpu, cpu->registers.program_counter) + (uint16_t)cpu->registers.x_register) & 0x00FF;
 	cpu->registers.program_counter++;
 
 	return absolute_address;
 }
-static uint16_t ZeroPageY(CPU* cpu) {
+static uint16_t ZeroPageY(struct CPU* cpu) {
 	uint16_t absolute_address = ((uint16_t)ReadByte(cpu, cpu->registers.program_counter) + (uint16_t)cpu->registers.y_register) & 0x00FF;
 	cpu->registers.program_counter++;
 
 	return absolute_address;
 }
-static uint16_t Relative(CPU* cpu) {
+static uint16_t Relative(struct CPU* cpu) {
 	uint16_t relative_address = (uint16_t)ReadByte(cpu, cpu->registers.program_counter);
 	cpu->registers.program_counter++;
 
@@ -211,13 +208,13 @@ static uint16_t Relative(CPU* cpu) {
 	
     return absolute_address;
 }
-static uint16_t Absolute(CPU* cpu) {
+static uint16_t Absolute(struct CPU* cpu) {
     uint16_t absolute_address = ReadLittleEndianWord(cpu, cpu->registers.program_counter);
     cpu->registers.program_counter += 2;
 
 	return absolute_address;
 }
-static uint16_t AbsoluteX(CPU* cpu) {
+static uint16_t AbsoluteX(struct CPU* cpu) {
 	uint16_t temp_address = ReadLittleEndianWord(cpu, cpu->registers.program_counter);
     cpu->registers.program_counter += 2;
     
@@ -229,7 +226,7 @@ static uint16_t AbsoluteX(CPU* cpu) {
 
     return absolute_address;
 }
-static uint16_t AbsoluteY(CPU* cpu) {
+static uint16_t AbsoluteY(struct CPU* cpu) {
 	uint16_t temp_address = ReadLittleEndianWord(cpu, cpu->registers.program_counter);
     cpu->registers.program_counter += 2;
 	
@@ -241,7 +238,7 @@ static uint16_t AbsoluteY(CPU* cpu) {
  
     return absolute_address;
 }
-static uint16_t Indirect(CPU* cpu) {
+static uint16_t Indirect(struct CPU* cpu) {
     uint16_t ptr = ReadLittleEndianWord(cpu, cpu->registers.program_counter);
     cpu->registers.program_counter += 2;
 
@@ -250,7 +247,7 @@ static uint16_t Indirect(CPU* cpu) {
 	
 	return absolute_address;
 }
-static uint16_t IndirectX(CPU* cpu) {
+static uint16_t IndirectX(struct CPU* cpu) {
 	uint8_t ptr = ReadByte(cpu, cpu->registers.program_counter);
 	cpu->registers.program_counter++;
     
@@ -259,7 +256,7 @@ static uint16_t IndirectX(CPU* cpu) {
 	
     return absolute_address;
 }
-static uint16_t IndirectY(CPU* cpu) {
+static uint16_t IndirectY(struct CPU* cpu) {
     uint8_t ptr = ReadByte(cpu, cpu->registers.program_counter);
     cpu->registers.program_counter++;
 
@@ -277,13 +274,13 @@ static uint16_t IndirectY(CPU* cpu) {
 
 
 
-static void ILL(CPU* cpu, const uint16_t absolute_address) {
+static void ILL(struct CPU* cpu, const uint16_t absolute_address) {
     printf("illigal opcode\n");
     exit(1);
     return;
 }
 
-static void ASL_ACC(CPU* cpu, const uint16_t absolute_address) {
+static void ASL_ACC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = cpu->registers.a_register;
     SetCarryFlagValue(cpu, (temp & 0x80));
     temp <<= 1;
@@ -292,7 +289,7 @@ static void ASL_ACC(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = temp;    
     return;    
 }
-static void ROL_ACC(CPU* cpu, const uint16_t absolute_address) {
+static void ROL_ACC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = cpu->registers.a_register;
     uint8_t temp_carry = GetCarryFlag(cpu);
     SetCarryFlagValue(cpu, (temp & 0x80));
@@ -303,7 +300,7 @@ static void ROL_ACC(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = temp;
     return;
 }
-static void LSR_ACC(CPU* cpu, const uint16_t absolute_address) {
+static void LSR_ACC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = cpu->registers.a_register;
     SetCarryFlagValue(cpu, (temp & 0x01));
     temp >>= 1;
@@ -312,7 +309,7 @@ static void LSR_ACC(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = temp;
     return;
 }
-static void ROR_ACC(CPU* cpu, const uint16_t absolute_address) {
+static void ROR_ACC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = cpu->registers.a_register;
     uint8_t temp_carry = GetCarryFlagValue(cpu);
     SetCarryFlagValue(cpu, (temp & 0x01));
@@ -324,7 +321,7 @@ static void ROR_ACC(CPU* cpu, const uint16_t absolute_address) {
     return;
 }
 
-static void BRK(CPU* cpu, const uint16_t absolute_address) {
+static void BRK(struct CPU* cpu, const uint16_t absolute_address) {
     /**/
     StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
     
@@ -337,7 +334,7 @@ static void BRK(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.program_counter = ReadLittleEndianWord(cpu, BREAK_INTERRUPT_OFFSET);
     return;
 }
-static void ORA(CPU* cpu, const uint16_t absolute_address) {
+static void ORA(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
 
     temp |= cpu->registers.a_register;
@@ -348,7 +345,7 @@ static void ORA(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = temp;
     return;
 }
-static void ASL(CPU* cpu, const uint16_t absolute_address) {
+static void ASL(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     SetCarryFlagValue(cpu, (temp & 0x80));
     temp <<= 1;
@@ -357,12 +354,12 @@ static void ASL(CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, temp);
     return; 
 }
-static void PHP(CPU* cpu, const uint16_t absolute_address) {
+static void PHP(struct CPU* cpu, const uint16_t absolute_address) {
     /**/
     StackPushByte(cpu, cpu->registers.status_flags | UNUSED | BRK_COMMAND);
     return;
 }
-static void BPL(CPU* cpu, const uint16_t absolute_address) {
+static void BPL(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetNegativeFlagValue(cpu) == 0) {
         cpu->remaining_cycles++;
 
@@ -374,16 +371,16 @@ static void BPL(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void CLC(CPU* cpu, const uint16_t absolute_address) {
+static void CLC(struct CPU* cpu, const uint16_t absolute_address) {
     SetCarryFlagValue(cpu, 0);
     return;
 }
-static void JSR(CPU* cpu, const uint16_t absolute_address) {
+static void JSR(struct CPU* cpu, const uint16_t absolute_address) {
     StackPushLittleEndianWord(cpu, (cpu->registers.program_counter - 1));
     cpu->registers.program_counter = absolute_address;
     return;
 }
-static void AND(CPU* cpu, const uint16_t absolute_address) {
+static void AND(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
 
     temp &= cpu->registers.a_register;
@@ -394,7 +391,7 @@ static void AND(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = temp;
     return;
 }
-static void BIT(CPU* cpu, const uint16_t absolute_address) {
+static void BIT(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
 
     temp &= cpu->registers.a_register;
@@ -405,7 +402,7 @@ static void BIT(CPU* cpu, const uint16_t absolute_address) {
     SetZeroFlagValue(cpu, (!temp));
     return;
 }
-static void ROL(CPU* cpu, const uint16_t absolute_address) {
+static void ROL(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint8_t temp_carry = GetCarryFlag(cpu);
     SetCarryFlagValue(cpu, (temp & 0x80));
@@ -416,14 +413,14 @@ static void ROL(CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, temp);
     return;
 }
-static void PLP(CPU* cpu, const uint16_t absolute_address) {
+static void PLP(struct CPU* cpu, const uint16_t absolute_address) {
     /**/
     cpu->registers.status_flags = StackPullByte(cpu);
     SetUnusedFlagValue(cpu, 1);
     SetBrkCommandFlagValue(cpu, 0); // on the actual 6502 cpu there is no place for this flag so it's ignored
     return;
 }
-static void BMI(CPU* cpu, const uint16_t absolute_address) {
+static void BMI(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetNegativeFlagValue(cpu) == 1) {
         cpu->remaining_cycles++;
 
@@ -435,11 +432,11 @@ static void BMI(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void SEC(CPU* cpu, const uint16_t absolute_address) {
+static void SEC(struct CPU* cpu, const uint16_t absolute_address) {
     SetCarryFlagValue(cpu, 1);
     return;
 }
-static void RTI(CPU* cpu, const uint16_t absolute_address) {
+static void RTI(struct CPU* cpu, const uint16_t absolute_address) {
     /**/
     cpu->registers.status_flags = StackPullByte(cpu);
     SetUnusedFlagValue(cpu, 1);
@@ -448,7 +445,7 @@ static void RTI(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.program_counter = StackPullLittleEndianWord(cpu);
     return;
 }
-static void EOR(CPU* cpu, const uint16_t absolute_address) {
+static void EOR(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
 
     temp ^= cpu->registers.a_register;
@@ -459,7 +456,7 @@ static void EOR(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = temp;
     return;
 }
-static void LSR(CPU* cpu, const uint16_t absolute_address) {
+static void LSR(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     SetCarryFlagValue(cpu, (temp & 0x01));
     temp >>= 1;
@@ -468,15 +465,15 @@ static void LSR(CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, temp);
     return;
 }
-static void PHA(CPU* cpu, const uint16_t absolute_address) {
+static void PHA(struct CPU* cpu, const uint16_t absolute_address) {
     StackPushByte(cpu, cpu->registers.a_register);
     return;
 }
-static void JMP(CPU* cpu, const uint16_t absolute_address) {
+static void JMP(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.program_counter = absolute_address;
     return;
 }
-static void BVC(CPU* cpu, const uint16_t absolute_address) {
+static void BVC(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetOverflowFlagValue(cpu) == 0) {
         cpu->remaining_cycles++;
 
@@ -488,15 +485,15 @@ static void BVC(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void CLI(CPU* cpu, const uint16_t absolute_address) {
+static void CLI(struct CPU* cpu, const uint16_t absolute_address) {
     SetIrgDisableFlagValue(cpu, 0);
     return;
 }
-static void RTS(CPU* cpu, const uint16_t absolute_address) {
+static void RTS(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.program_counter = StackPullLittleEndianWord(cpu) + 1;
     return;
 }
-static void ADC(CPU* cpu, const uint16_t absolute_address) {
+static void ADC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint16_t res = (uint16_t)cpu->registers.a_register + (uint16_t)temp + (uint16_t)GetCarryFlagValue(cpu);
 
@@ -526,7 +523,7 @@ static void ADC(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = (uint8_t)(res & 0x00FF);
     return;
 }
-static void ROR(CPU* cpu, const uint16_t absolute_address) {
+static void ROR(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint8_t temp_carry = GetCarryFlagValue(cpu);
     SetCarryFlagValue(cpu, (temp & 0x01));
@@ -537,14 +534,14 @@ static void ROR(CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, temp);
     return;
 }
-static void PLA(CPU* cpu, const uint16_t absolute_address) {
+static void PLA(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = StackPullByte(cpu);
     SetNegativeFlagValue(cpu, (temp & 0x80));
     SetZeroFlagValue(cpu, (!temp));
     cpu->registers.a_register = temp;
     return;
 }
-static void BVS(CPU* cpu, const uint16_t absolute_address) {
+static void BVS(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetOverflowFlagValue(cpu) == 1) {
         cpu->remaining_cycles++;
 
@@ -556,35 +553,35 @@ static void BVS(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void SEI(CPU* cpu, const uint16_t absolute_address) {
+static void SEI(struct CPU* cpu, const uint16_t absolute_address) {
     SetIrgDisableFlagValue(cpu, 1);
     return;
 }
-static void STA(CPU* cpu, const uint16_t absolute_address) {
+static void STA(struct CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, cpu->registers.a_register);
     return;
 }
-static void STY(CPU* cpu, const uint16_t absolute_address) {
+static void STY(struct CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, cpu->registers.y_register);
     return;
 }
-static void STX(CPU* cpu, const uint16_t absolute_address) {
+static void STX(struct CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, cpu->registers.x_register);
     return;
 }
-static void DEY(CPU* cpu, const uint16_t absolute_address) {
+static void DEY(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.y_register--;
     SetNegativeFlagValue(cpu, (cpu->registers.y_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.y_register));
     return;
 }
-static void TXA(CPU* cpu, const uint16_t absolute_address) {
+static void TXA(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = cpu->registers.x_register;
     SetNegativeFlagValue(cpu, (cpu->registers.a_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.a_register));
     return;
 }
-static void BCC(CPU* cpu, const uint16_t absolute_address) {
+static void BCC(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetCarryFlagValue(cpu) == 0) {
         cpu->remaining_cycles++;
 
@@ -596,47 +593,47 @@ static void BCC(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void TYA(CPU* cpu, const uint16_t absolute_address) {
+static void TYA(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = cpu->registers.y_register;
     SetNegativeFlagValue(cpu, (cpu->registers.a_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.a_register));
     return;
 }
-static void TXS(CPU* cpu, const uint16_t absolute_address) {
+static void TXS(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.stack_pointer = cpu->registers.x_register;
     return;
 }
-static void LDY(CPU* cpu, const uint16_t absolute_address) {
+static void LDY(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.y_register = ReadByte(cpu, absolute_address);
     SetNegativeFlagValue(cpu, (cpu->registers.y_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.y_register));
     return;
 }
-static void LDA(CPU* cpu, const uint16_t absolute_address) {
+static void LDA(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = ReadByte(cpu, absolute_address);
     SetNegativeFlagValue(cpu, (cpu->registers.a_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.a_register));
     return;
 }
-static void LDX(CPU* cpu, const uint16_t absolute_address) {
+static void LDX(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.x_register = ReadByte(cpu, absolute_address);
     SetNegativeFlagValue(cpu, (cpu->registers.x_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.x_register));
     return;
 }
-static void TAY(CPU* cpu, const uint16_t absolute_address) {
+static void TAY(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.y_register = cpu->registers.a_register;
     SetNegativeFlagValue(cpu, (cpu->registers.y_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.y_register));
     return;
 }
-static void TAX(CPU* cpu, const uint16_t absolute_address) {
+static void TAX(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.x_register = cpu->registers.a_register;
     SetNegativeFlagValue(cpu, (cpu->registers.x_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.x_register));
     return;
 }
-static void BCS(CPU* cpu, const uint16_t absolute_address) {
+static void BCS(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetCarryFlagValue(cpu) == 1) {
         cpu->remaining_cycles++;
 
@@ -648,16 +645,16 @@ static void BCS(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void CLV(CPU* cpu, const uint16_t absolute_address) {
+static void CLV(struct CPU* cpu, const uint16_t absolute_address) {
     SetOverflowFlagValue(cpu, 0);
 }
-static void TSX(CPU* cpu, const uint16_t absolute_address) {
+static void TSX(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.x_register = cpu->registers.stack_pointer;
     SetNegativeFlagValue(cpu, (cpu->registers.x_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.x_register));
     return;
 }
-static void CPY(CPU* cpu, const uint16_t absolute_address) {
+static void CPY(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint16_t cmp = (uint16_t)cpu->registers.y_register - (uint16_t)temp;
     SetCarryFlagValue(cpu, (!(cmp & 0xFF00)));
@@ -665,7 +662,7 @@ static void CPY(CPU* cpu, const uint16_t absolute_address) {
     SetZeroFlagValue(cpu, (!(cmp & 0x00FF)));
     return;
 }
-static void CMP(CPU* cpu, const uint16_t absolute_address) {
+static void CMP(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint16_t cmp = (uint16_t)cpu->registers.a_register - (uint16_t)temp;
     SetCarryFlagValue(cpu, (!(cmp & 0xFF00)));
@@ -673,7 +670,7 @@ static void CMP(CPU* cpu, const uint16_t absolute_address) {
     SetZeroFlagValue(cpu, (!(cmp & 0x00FF)));
     return;
 }
-static void DEC(CPU* cpu, const uint16_t absolute_address) {
+static void DEC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     temp--;
     SetNegativeFlagValue(cpu, (temp & 0x80));
@@ -681,19 +678,19 @@ static void DEC(CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, temp);
     return;
 }
-static void INY(CPU* cpu, const uint16_t absolute_address) {
+static void INY(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.y_register++;
     SetNegativeFlagValue(cpu, (cpu->registers.y_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.y_register));
     return;
 }
-static void DEX(CPU* cpu, const uint16_t absolute_address) {
+static void DEX(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.x_register--;
     SetNegativeFlagValue(cpu, (cpu->registers.x_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.x_register));
     return;
 }
-static void BNE(CPU* cpu, const uint16_t absolute_address) {
+static void BNE(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetZeroFlagValue(cpu) == 0) {
         cpu->remaining_cycles++;
 
@@ -705,11 +702,11 @@ static void BNE(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void CLD(CPU* cpu, const uint16_t absolute_address) {
+static void CLD(struct CPU* cpu, const uint16_t absolute_address) {
     SetDecimalModeFlagValue(cpu, 0);
     return;
 }
-static void CPX(CPU* cpu, const uint16_t absolute_address) {
+static void CPX(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint16_t cmp = (uint16_t)cpu->registers.x_register - (uint16_t)temp;
     SetCarryFlagValue(cpu, (!(cmp & 0xFF00)));
@@ -717,7 +714,7 @@ static void CPX(CPU* cpu, const uint16_t absolute_address) {
     SetZeroFlagValue(cpu, (!(cmp & 0x00FF)));
     return;
 }
-static void SBC(CPU* cpu, const uint16_t absolute_address) {
+static void SBC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint16_t res = (uint16_t)cpu->registers.a_register - (uint16_t)temp + (uint16_t)GetCarryFlagValue(cpu) - 1;
 
@@ -742,7 +739,7 @@ static void SBC(CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.a_register = (uint8_t)(res & 0x00FF);
     return;
 }
-static void INC(CPU* cpu, const uint16_t absolute_address) {
+static void INC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     temp++;
     SetNegativeFlagValue(cpu, (temp & 0x80));
@@ -750,16 +747,16 @@ static void INC(CPU* cpu, const uint16_t absolute_address) {
     WriteByte(cpu, absolute_address, temp);
     return;
 }
-static void INX(CPU* cpu, const uint16_t absolute_address) {
+static void INX(struct CPU* cpu, const uint16_t absolute_address) {
     cpu->registers.x_register++;
     SetNegativeFlagValue(cpu, (cpu->registers.x_register & 0x80));
     SetZeroFlagValue(cpu, (!cpu->registers.x_register));
     return;
 }
-static void NOP(CPU* cpu, const uint16_t absolute_address) {
+static void NOP(struct CPU* cpu, const uint16_t absolute_address) {
     return;
 }
-static void BEQ(CPU* cpu, const uint16_t absolute_address) {
+static void BEQ(struct CPU* cpu, const uint16_t absolute_address) {
     if (GetZeroFlagValue(cpu) == 1) {
         cpu->remaining_cycles++;
 
@@ -771,7 +768,7 @@ static void BEQ(CPU* cpu, const uint16_t absolute_address) {
     }
     return;
 }
-static void SED(CPU* cpu, const uint16_t absolute_address) {
+static void SED(struct CPU* cpu, const uint16_t absolute_address) {
     SetDecimalModeFlagValue(cpu, 1);
     return;
 }
@@ -780,8 +777,8 @@ static void SED(CPU* cpu, const uint16_t absolute_address) {
 
 typedef struct Instruction {
     char mnemonic[4];
-    void (*operator)(CPU*, const uint16_t);
-    uint16_t (*address_mode)(CPU*);
+    void (*operator)(struct CPU*, const uint16_t);
+    uint16_t (*address_mode)(struct CPU*);
     uint8_t cycles;
 } Instruction;
 
@@ -1062,15 +1059,16 @@ static const Instruction instructions[256] = {
 
 
 
-void CPUInit(CPU* cpu) {
+void CPUInit(struct CPU* cpu) {
     // registers
     cpu->registers.a_register = 0;
 	cpu->registers.x_register = 0; 
 	cpu->registers.y_register = 0;   
     cpu->registers.status_flags = 0;
     cpu->registers.stack_pointer = STACK_POINTER_OFFSET; 
-    WriteLittleEndianWord(cpu, RESET_OFFSET, 0x8000);
-	cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
+
+	//cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
+	cpu->registers.program_counter = ReadByte(cpu, RESET_OFFSET);
 
     cpu->remaining_cycles = 0;
     cpu->tick_counter = 0;
@@ -1078,48 +1076,48 @@ void CPUInit(CPU* cpu) {
     SetUnusedFlagValue(cpu, 1);
     SetIrgDisableFlagValue(cpu, 1);
 
-    memset(memory, 0, 65536 * sizeof(uint8_t));
-    for (int i = 0; i < 65536; i++) {
-        memory[i] = rand() & 0xFF;
-    } 
-
-    memory[0x8000] = 0xa2;
-    memory[0x8001] = 0x0a;
-    memory[0x8002] = 0x8e;
-    memory[0x8003] = 0x00;
-    memory[0x8004] = 0x00;
-    memory[0x8005] = 0xa2;
-    memory[0x8006] = 0x03;
-    memory[0x8007] = 0x8e;
-
-    memory[0x8008] = 0x01;
-    memory[0x8009] = 0x00;
-    memory[0x800a] = 0xac;
-    memory[0x800b] = 0x00;
-    memory[0x800c] = 0x00;
-    memory[0x800d] = 0xa9;
-    memory[0x800e] = 0x00;
-    memory[0x800f] = 0x18;
-
-    memory[0x8010] = 0x6d;
-    memory[0x8011] = 0x01;
-    memory[0x8012] = 0x00;
-    memory[0x8013] = 0x88;
-    memory[0x8014] = 0xd0;
-    memory[0x8015] = 0xfa;
-    memory[0x8016] = 0x8d;
-    memory[0x8017] = 0x02;
-
-    memory[0x8018] = 0x00;
-    memory[0x8019] = 0xea;
-    memory[0x801a] = 0xea;
-    memory[0x801b] = 0xea;
+    //memset(memory, 0, 65536 * sizeof(uint8_t));
+    //for (int i = 0; i < 65536; i++) {
+    //    memory[i] = rand() & 0xFF;
+    //} 
+    //
+    //memory[0x8000] = 0xa2;
+    //memory[0x8001] = 0x0a;
+    //memory[0x8002] = 0x8e;
+    //memory[0x8003] = 0x00;
+    //memory[0x8004] = 0x00;
+    //memory[0x8005] = 0xa2;
+    //memory[0x8006] = 0x03;
+    //memory[0x8007] = 0x8e;
+    //
+    //memory[0x8008] = 0x01;
+    //memory[0x8009] = 0x00;
+    //memory[0x800a] = 0xac;
+    //memory[0x800b] = 0x00;
+    //memory[0x800c] = 0x00;
+    //memory[0x800d] = 0xa9;
+    //memory[0x800e] = 0x00;
+    //memory[0x800f] = 0x18;
+    //
+    //memory[0x8010] = 0x6d;
+    //memory[0x8011] = 0x01;
+    //memory[0x8012] = 0x00;
+    //memory[0x8013] = 0x88;
+    //memory[0x8014] = 0xd0;
+    //memory[0x8015] = 0xfa;
+    //memory[0x8016] = 0x8d;
+    //memory[0x8017] = 0x02;
+    //
+    //memory[0x8018] = 0x00;
+    //memory[0x8019] = 0xea;
+    //memory[0x801a] = 0xea;
+    //memory[0x801b] = 0xea;
 
 
 }
 
 
-void CPUReset(CPU* cpu) {
+void CPUReset(struct CPU* cpu) {
     cpu->registers.program_counter = ReadLittleEndianWord(cpu, RESET_OFFSET);
     
     cpu->registers.stack_pointer -= 3;
@@ -1132,7 +1130,7 @@ void CPUReset(CPU* cpu) {
 
 
 
-void CPUInterruptRequest(CPU* cpu) {
+void CPUInterruptRequest(struct CPU* cpu) {
     if (GetIrqDisableFlagValue(cpu) == 0) {
         StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
 
@@ -1148,7 +1146,7 @@ void CPUInterruptRequest(CPU* cpu) {
     }
 }
 
-void CPUNonMaskableInterrupt(CPU* cpu) {
+void CPUNonMaskableInterrupt(struct CPU* cpu) {
     StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
 
     SetBrkCommandFlagValue(cpu, 0);
@@ -1162,13 +1160,14 @@ void CPUNonMaskableInterrupt(CPU* cpu) {
     cpu->remaining_cycles = 8;
 }
 
-//void tick(CPU* cpu, FILE* log_file) {
-void CPUClock(CPU* cpu) {
+void CPUClock(struct CPU* cpu) {
     if (cpu->remaining_cycles == 0) {
         uint8_t op_code = ReadByte(cpu, cpu->registers.program_counter);
         cpu->registers.program_counter++;
         
+
         Instruction instruction = instructions[op_code];
+        printf("mnemonic: %s\n", instruction.mnemonic);
         
         //fprintf(log_file, 
         //        "clock: %lu  -  mnemonic: %s  -  opcode: 0x%0x  -  A: 0x%02x  -  X: 0x%02x  -  Y: 0x%02x  -  Status: 0x%02x  -  Stack pointer: 0x%02x  -  Program counter: 0x%04x\n", 
@@ -1187,7 +1186,7 @@ void CPUClock(CPU* cpu) {
 }
 
 
-uint8_t CPUDisassemble(CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h) {
+uint8_t CPUDisassemble(struct CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h) {
     // note that for addressing modes that require a register (x/y) it can't fully be disassembled 
     // because registers are a runtime thing and this function only disassembles the code doesn't execute it 
 
@@ -1382,63 +1381,3 @@ uint8_t CPUDisassemble(CPU* cpu, uint16_t start_address, uint16_t count, char** 
 
     return active_row;
 }
-
-
-//int main() {
-//
-//    CPU cpu;
-//    Init(&cpu);
-//
-//    memory[0x8000] = 0xa2;
-//    memory[0x8001] = 0x0a;
-//    memory[0x8002] = 0x8e;
-//    memory[0x8003] = 0x00;
-//    memory[0x8004] = 0x00;
-//    memory[0x8005] = 0xa2;
-//    memory[0x8006] = 0x03;
-//    memory[0x8007] = 0x8e;
-//
-//    memory[0x8008] = 0x01;
-//    memory[0x8009] = 0x00;
-//    memory[0x800a] = 0xac;
-//    memory[0x800b] = 0x00;
-//    memory[0x800c] = 0x00;
-//    memory[0x800d] = 0xa9;
-//    memory[0x800e] = 0x00;
-//    memory[0x800f] = 0x18;
-//
-//    memory[0x8010] = 0x6d;
-//    memory[0x8011] = 0x01;
-//    memory[0x8012] = 0x00;
-//    memory[0x8013] = 0x88;
-//    memory[0x8014] = 0xd0;
-//    memory[0x8015] = 0xfa;
-//    memory[0x8016] = 0x8d;
-//    memory[0x8017] = 0x02;
-//
-//    memory[0x8018] = 0x00;
-//    memory[0x8019] = 0xea;
-//    memory[0x801a] = 0xea;
-//    memory[0x801b] = 0xea;
-//
-//
-//    WriteLittleEndianWord(RESET_OFFSET, 0x8000);
-//
-//    Reset(&cpu);
-//
-//    const char* log_filename = "cpu_log.txt";
-//    FILE* log_file = fopen(log_filename, "w");
-//    if (log_file == NULL) {
-//        perror("fopen");
-//        exit(1);
-//    }
-//
-//    for (int i = 0; i < 1000; i++) {
-//        printf("tick: %d\n", i);
-//        tick(&cpu, log_file);
-//    }
-//
-//
-//    fclose(log_file);
-//    return 0;
-//}
