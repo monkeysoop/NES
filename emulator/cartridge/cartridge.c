@@ -160,7 +160,7 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         }
 
 
-        Mirroring mirroring = header.mirroring ? VERTICAL_MIRRORING : HORIZONTAL_MIRRORING;
+        enum Mirroring mirroring = header.mirroring ? VERTICAL_MIRRORING : HORIZONTAL_MIRRORING;
         CartridgeSetMirroring(cartridge, mirroring);
     }
 
@@ -184,7 +184,7 @@ void CartridgeScanlineIRQ(struct Cartridge* cartridge) {
     }
 }
 
-void CartridgeSetMirroring(struct Cartridge* cartridge, Mirroring mirroring) {
+void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring) {
     switch (mirroring) {
         case VERTICAL_MIRRORING: 
             cartridge->mirroring_offsets[0] = 0x0;

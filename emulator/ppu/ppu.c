@@ -16,7 +16,7 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 
 
 
-void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, TVSystem tv_system) {
+void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
     ppu->status_register = 0b10100000; // wiki says these bits are often set
@@ -44,7 +44,7 @@ void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, TVSystem tv_system) {
     ppu->ppu_bus = ppu_bus;
 }
 
-void PPUReset(struct PPU* ppu, TVSystem tv_system) {
+void PPUReset(struct PPU* ppu, enum TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
     ppu->status_register = ppu->status_register & 0b10000000;

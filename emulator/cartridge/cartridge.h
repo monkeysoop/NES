@@ -13,31 +13,31 @@
 #define ColorDreams 11
 #define GxROM 66
 
-typedef enum FileFormat {
+enum FileFormat {
     iNES,
     NES_2,
     ARCHAIC_iNES,
-} FileFormat;
+};
 
-typedef enum TVSystem {
+enum TVSystem {
     PAL,
     NTSC,
-} TVSystem;
+};
 
 
-typedef enum Mirroring {
+enum Mirroring {
     VERTICAL_MIRRORING,
     HORIZONTAL_MIRRORING,
     ONE_SCREEN_MIRRORING,
     ONE_SCREEN_LOWER_MIRRORING,
     ONE_SCREEN_UPPER_MIRRORING,
     FOUR_SCREEN_MIRRORING,
-} Mirroring;
+};
 
 struct Cartridge {
-    FileFormat format;
-    TVSystem tv_system;
-    Mirroring mirroring;
+    enum FileFormat format;
+    enum TVSystem tv_system;
+    enum Mirroring mirroring;
     uint8_t mapper_id;
 
     uint8_t prg_rom_16KB_units;
@@ -66,7 +66,7 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename);
 void CartridgeClean(struct Cartridge* cartridge);
 
 void CartridgeScanlineIRQ(struct Cartridge* cartridge);
-void CartridgeSetMirroring(struct Cartridge* cartridge, Mirroring mirroring);
+void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring);
 
 uint8_t CartridgeReadCPU(struct Cartridge* cartridge, const uint16_t address);
 uint8_t CartridgeReadPPU(struct Cartridge* cartridge, const uint16_t address);

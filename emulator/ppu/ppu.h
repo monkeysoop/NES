@@ -89,8 +89,8 @@ struct PPU {
     struct PPUBus* ppu_bus;
 };
 
-void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, TVSystem tv_system);
-void PPUReset(struct PPU* ppu, TVSystem tv_system);
+void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system);
+void PPUReset(struct PPU* ppu, enum TVSystem tv_system);
 
 bool PPUClockNTSC(struct PPU* ppu);
 bool PPUClockPAL(struct PPU* ppu);
