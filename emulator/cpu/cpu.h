@@ -8,6 +8,19 @@
 
 #include "cpu_bus.h"
 
+
+#define ZERO_PAGE_BYTE_WIDTH 3
+
+#define ZERO_PAGE_BYTE_BUFFER_WIDTH 16
+#define ZERO_PAGE_BYTE_BUFFER_HEIGHT 16
+
+#define REGISTER_WIDTH 23
+#define REGISTERS_BUFFER_HEIGHT 13 
+
+#define DISASSEMBLY_BUFFER_WIDTH 32
+#define DISASSEMBLY_BUFFER_HEIGHT 48
+
+
 #define STACK_POINTER_OFFSET 0xFD
 #define STACK_OFFSET 0x0100
 #define RESET_OFFSET 0xFFFC
@@ -51,6 +64,11 @@ void CPUNonMaskableInterrupt(struct CPU* cpu);
 
 void CPUClock(struct CPU* cpu);
 
-uint8_t CPUDisassemble(struct CPU* cpu, uint16_t start_address, uint16_t count, char** debug_char_buffer, uint8_t w, uint8_t h);
+uint8_t CPUDisassemble(
+    struct CPU* cpu, uint16_t start_address, uint16_t count, 
+    char disassembly_buffer[DISASSEMBLY_BUFFER_HEIGHT][DISASSEMBLY_BUFFER_WIDTH],
+    char zero_page_buffer[ZERO_PAGE_BYTE_BUFFER_HEIGHT][ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH],
+    char registers_buffer[REGISTERS_BUFFER_HEIGHT][REGISTER_WIDTH]
+);
 
 #endif
