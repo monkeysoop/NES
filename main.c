@@ -371,9 +371,9 @@ int main(int argc, char** argv)
             .height = MAX((REGISTERS_BUFFER_HEIGHT + DISASSEMBLY_BUFFER_HEIGHT), ZERO_PAGE_BYTE_BUFFER_HEIGHT),
         },
 
-        .disassembly_buffer = { 0 },
-        .zero_page_buffer = { 0 },
-        .registers_buffer = { 0 },
+        .disassembly_buffer = { { 0 } },
+        .zero_page_buffer = { { 0 } },
+        .registers_buffer = { { 0 } },
     };
     
     Init(&main_window, &debug_window);
