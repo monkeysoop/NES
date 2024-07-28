@@ -391,11 +391,11 @@ static void AND(struct CPU* cpu, const uint16_t absolute_address) {
 static void BIT(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
 
-    temp &= cpu->registers.a_register;
-
-    SetOverflowFlagValue(cpu, (temp & 0x40));
-    
     SetNegativeFlagValue(cpu, (temp & 0x80));
+    SetOverflowFlagValue(cpu, (temp & 0x40));
+
+    temp &= cpu->registers.a_register;
+    
     SetZeroFlagValue(cpu, (!temp));
     return;
 }
@@ -780,6 +780,7 @@ typedef struct Instruction {
 } Instruction;
 
 static const Instruction instructions[256] = {
+    // 0
     { .mnemonic="BRK", .operator=&BRK, .address_mode=&Immediate, .cycles=7 },   // ????????????????????????,
     { .mnemonic="ORA", .operator=&ORA, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -796,7 +797,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="ORA", .operator=&ORA, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="ASL", .operator=&ASL, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//6 },
-    
+    // 1
 	{ .mnemonic="BPL", .operator=&BPL, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="ORA", .operator=&ORA, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -813,7 +814,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="ORA", .operator=&ORA, .address_mode=&AbsoluteX, .cycles=4 },
     { .mnemonic="ASL", .operator=&ASL, .address_mode=&AbsoluteX, .cycles=7 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//7 },
-	
+	// 2
     { .mnemonic="JSR", .operator=&JSR, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="AND", .operator=&AND, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -830,7 +831,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="AND", .operator=&AND, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="ROL", .operator=&ROL, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//6 },
-	
+	// 3
     { .mnemonic="BMI", .operator=&BMI, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="AND", .operator=&AND, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -847,7 +848,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="AND", .operator=&AND, .address_mode=&AbsoluteX, .cycles=4 },
     { .mnemonic="ROL", .operator=&ROL, .address_mode=&AbsoluteX, .cycles=7 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//7 },
-	
+	// 4
     { .mnemonic="RTI", .operator=&RTI, .address_mode=&Implied, .cycles=6 },
     { .mnemonic="EOR", .operator=&EOR, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -864,7 +865,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="EOR", .operator=&EOR, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="LSR", .operator=&LSR, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//6 },
-	
+	// 5
     { .mnemonic="BVC", .operator=&BVC, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="EOR", .operator=&EOR, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -881,7 +882,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="EOR", .operator=&EOR, .address_mode=&AbsoluteX, .cycles=4 },
     { .mnemonic="LSR", .operator=&LSR, .address_mode=&AbsoluteX, .cycles=7 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//7 },
-	
+	// 6
     { .mnemonic="RTS", .operator=&RTS, .address_mode=&Implied, .cycles=6 },
     { .mnemonic="ADC", .operator=&ADC, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -898,7 +899,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="ADC", .operator=&ADC, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="ROR", .operator=&ROR, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//6 },
-	
+	// 7
     { .mnemonic="BVS", .operator=&BVS, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="ADC", .operator=&ADC, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -915,7 +916,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="ADC", .operator=&ADC, .address_mode=&AbsoluteX, .cycles=4 },
     { .mnemonic="ROR", .operator=&ROR, .address_mode=&AbsoluteX, .cycles=7 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//7 },
-	
+	// 8
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
     { .mnemonic="STA", .operator=&STA, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -932,7 +933,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="STA", .operator=&STA, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="STX", .operator=&STX, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//4 },
-	
+	// 9
     { .mnemonic="BCC", .operator=&BCC, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="STA", .operator=&STA, .address_mode=&IndirectY, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -949,7 +950,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="STA", .operator=&STA, .address_mode=&AbsoluteX, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//5 },
-	
+	// A
     { .mnemonic="LDY", .operator=&LDY, .address_mode=&Immediate, .cycles=2 },
     { .mnemonic="LDA", .operator=&LDA, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="LDX", .operator=&LDX, .address_mode=&Immediate, .cycles=2 },
@@ -966,7 +967,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="LDA", .operator=&LDA, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="LDX", .operator=&LDX, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//4 },
-	
+	// B
     { .mnemonic="BCS", .operator=&BCS, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="LDA", .operator=&LDA, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -983,7 +984,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="LDA", .operator=&LDA, .address_mode=&AbsoluteX, .cycles=4 },
     { .mnemonic="LDX", .operator=&LDX, .address_mode=&AbsoluteY, .cycles=4 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//4 },
-	
+	// C
     { .mnemonic="CPY", .operator=&CPY, .address_mode=&Immediate, .cycles=2 },
     { .mnemonic="CMP", .operator=&CMP, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -1000,7 +1001,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="CMP", .operator=&CMP, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="DEC", .operator=&DEC, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//6 },
-	
+	// D
     { .mnemonic="BNE", .operator=&BNE, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="CMP", .operator=&CMP, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -1017,7 +1018,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="CMP", .operator=&CMP, .address_mode=&AbsoluteX, .cycles=4 },
     { .mnemonic="DEC", .operator=&DEC, .address_mode=&AbsoluteX, .cycles=7 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//7 },
-	
+	// E
     { .mnemonic="CPX", .operator=&CPX, .address_mode=&Immediate, .cycles=2 },
     { .mnemonic="SBC", .operator=&SBC, .address_mode=&IndirectX, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -1034,7 +1035,7 @@ static const Instruction instructions[256] = {
     { .mnemonic="SBC", .operator=&SBC, .address_mode=&Absolute, .cycles=4 },
     { .mnemonic="INC", .operator=&INC, .address_mode=&Absolute, .cycles=6 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//6 },
-	
+	// F
     { .mnemonic="BEQ", .operator=&BEQ, .address_mode=&Relative, .cycles=2 },
     { .mnemonic="SBC", .operator=&SBC, .address_mode=&IndirectY, .cycles=5 },
     { .mnemonic="???", .operator=&ILL, .address_mode=&IlligalMode, .cycles=0 },//2 },
@@ -1126,7 +1127,7 @@ void CPUClock(struct CPU* cpu) {
         
         Instruction instruction = instructions[op_code];
         
-        printf("mnemonic: %s  -  opcode: 0x%02x  -  A: 0x%02x  -  X: 0x%02x  -  Y: 0x%02x  -  Status: 0x%02x  -  Stack pointer: 0x%02x  -  Program counter: 0x%04x  -  tick: %lu\n", 
+        printf("mnemonic: %s  -  opcode: 0x%02X  -  A: 0x%02X  -  X: 0x%02X  -  Y: 0x%02X  -  Status: 0x%02X  -  Stack pointer: 0x%02X  -  Program counter: 0x%04X  -  tick: %lu\n", 
                instruction.mnemonic, op_code, cpu->registers.a_register, cpu->registers.x_register, cpu->registers.y_register, 
                cpu->registers.status_flags, cpu->registers.stack_pointer, cpu->registers.program_counter, cpu->tick_counter - 1);
         
