@@ -6,7 +6,7 @@
 #include "cartridge.h"
 #include "ppu.h"
 
-#define CPU_RAM_SIZE 0x7FF  // 2KB
+#define CPU_RAM_SIZE 0x0800  // 2KB
 
 
 #define PPU_CTRL 0x2000
