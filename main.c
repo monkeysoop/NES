@@ -5,8 +5,7 @@
 
 #include "emulator.h"
 
-#define NES_SCREEN_WIDTH 256
-#define NES_SCREEN_HEIGHT 240
+
 
 #define FONT_TEXTURE_CHAR_SIZE 8
 #define FONT_TEXTURE_CHARS_WIDTH 16
@@ -16,9 +15,10 @@
 
 
 
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX_2(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN_2(a, b) (((a) < (b)) ? (a) : (b))
 
+# define MAX_3(a, b, c) MAX_2(a, MAX_2(b, c))
 
 struct DebugLayout {
     uint8_t zero_page_offset_x;
@@ -30,7 +30,14 @@ struct DebugLayout {
     uint8_t disassembly_offset_x;
     uint8_t disassembly_offset_y;
 
+    uint8_t palette_offset_x;
+    uint8_t palette_offset_y;
+
+    uint8_t pattern_table_offset_x;
+    uint8_t pattern_table_offset_y;
+
     uint8_t disassembly_active_row_y;
+    uint8_t selected_palette;
 
     uint8_t width;
     uint8_t height;
@@ -55,6 +62,10 @@ struct DebugWindow {
     char disassembly_buffer[DISASSEMBLY_BUFFER_HEIGHT][DISASSEMBLY_BUFFER_WIDTH];
     char zero_page_buffer[ZERO_PAGE_BYTE_BUFFER_HEIGHT][ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH];
     char registers_buffer[REGISTERS_BUFFER_HEIGHT][REGISTER_WIDTH]; 
+
+    uint8_t palette_buffer[PALETTE_BUFFER_HEIGHT][PALETTE_BUFFER_WIDTH];
+
+    uint32_t pattern_tables_pixels_buffer[2][PATTERN_TABLE_WIDTH * PATTERN_TABLE_HEIGHT];
 };
 
 
@@ -128,8 +139,8 @@ void Init(struct MainWindow* main_window, struct DebugWindow* debug_window) {
         "NES debug view",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        debug_window->layout.width * FONT_TEXTURE_CHAR_SIZE * 2, 
-        debug_window->layout.height * FONT_TEXTURE_CHAR_SIZE * 2,
+        debug_window->layout.width * FONT_TEXTURE_CHAR_SIZE, 
+        debug_window->layout.height * FONT_TEXTURE_CHAR_SIZE,
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
     );
     if (debug_window->window == NULL) {
@@ -177,30 +188,25 @@ void MainRender(struct MainWindow main_window) {
     SDL_RenderClear(main_window.renderer);
     
     
-    //SDL_RenderCopyEx(
-    //    main_window.renderer, 
-    //    main_window.texture, 
-    //    NULL, 
-    //    NULL,
-    //    0.0,
-    //    NULL,
-    //    SDL_FLIP_NONE
-    //);
+    SDL_RenderCopyEx(
+        main_window.renderer, 
+        main_window.texture, 
+        NULL, 
+        NULL,
+        0.0,
+        NULL,
+        SDL_FLIP_NONE
+    );
     
     SDL_RenderPresent(main_window.renderer);
 }
 
 
 void DebugRender(struct DebugWindow debug_window) {
-    SDL_SetRenderDrawColor(debug_window.renderer, 0x00, 0x00, 0x00, 0xFF);
-    SDL_RenderClear(debug_window.renderer);
-
-
-        
-
     SDL_SetRenderTarget(debug_window.renderer, debug_window.texture);
-    SDL_SetTextureColorMod(debug_window.font_texture, 0xFF, 0x00, 0x00);
 
+    // disassembly
+    SDL_SetTextureColorMod(debug_window.font_texture, 0xFF, 0x00, 0x00);
     for (int y = 0; y < DISASSEMBLY_BUFFER_HEIGHT; y++) {
         if (y == debug_window.layout.disassembly_active_row_y) {
             SDL_SetTextureColorMod(debug_window.font_texture, 0x00, 0x00, 0xFF);
@@ -239,6 +245,7 @@ void DebugRender(struct DebugWindow debug_window) {
         }
     }
 
+    // zero page
     SDL_SetTextureColorMod(debug_window.font_texture, 0x00, 0xFF, 0x00);
     for (int y = 0; y < ZERO_PAGE_BYTE_BUFFER_HEIGHT; y++) {
         for (int x = 0; x < ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH; x++) {
@@ -272,6 +279,7 @@ void DebugRender(struct DebugWindow debug_window) {
         }
     }
 
+    // registers
     SDL_SetTextureColorMod(debug_window.font_texture, 0xFF, 0x00, 0xFF);
     for (int y = 0; y < REGISTERS_BUFFER_HEIGHT; y++) {
         for (int x = 0; x < REGISTER_WIDTH; x++) {
@@ -304,6 +312,45 @@ void DebugRender(struct DebugWindow debug_window) {
             );
         }
     }
+
+    // palette
+    for (int y = 0; y < PALETTE_BUFFER_HEIGHT; y++) {
+        for (int x = 0; x < PALETTE_BUFFER_WIDTH; x++) {
+            uint32_t color_rgba = nes_palette_colors_rgba[debug_window.palette_buffer[y][x]];
+
+            SDL_SetRenderDrawColor(debug_window.renderer, ((color_rgba & 0xFF000000) >> 24), ((color_rgba & 0x00FF0000) >> 16) ,((color_rgba & 0x0000FF00) >> 8), (color_rgba & 0x000000FF));
+
+            SDL_Rect target_rect = {
+                .x =((debug_window.layout.palette_offset_x + x) * FONT_TEXTURE_CHAR_SIZE), 
+                .y=((debug_window.layout.palette_offset_y + y) * FONT_TEXTURE_CHAR_SIZE), 
+                .w=FONT_TEXTURE_CHAR_SIZE, 
+                .h=FONT_TEXTURE_CHAR_SIZE
+            };
+
+            SDL_RenderFillRect(debug_window.renderer, &target_rect);
+        }
+    }
+    
+    // pattern table
+    SDL_Rect pattern_table_target_rect_1 = {
+        .x =((debug_window.layout.pattern_table_offset_x) * FONT_TEXTURE_CHAR_SIZE), 
+        .y=((debug_window.layout.pattern_table_offset_y) * FONT_TEXTURE_CHAR_SIZE), 
+        .w=PATTERN_TABLE_WIDTH, 
+        .h=PATTERN_TABLE_HEIGHT
+    };
+
+    SDL_Rect pattern_table_target_rect_2 = {
+        .x =((debug_window.layout.pattern_table_offset_x) * FONT_TEXTURE_CHAR_SIZE + PATTERN_TABLE_WIDTH),  // the offsets are in terms of characters but the PATTERN_TABLE_WIDTH is in pixels
+        .y=((debug_window.layout.pattern_table_offset_y) * FONT_TEXTURE_CHAR_SIZE), 
+        .w=PATTERN_TABLE_WIDTH, 
+        .h=PATTERN_TABLE_HEIGHT
+    };
+
+
+
+    SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_1, &(debug_window.pattern_tables_pixels_buffer[0][0]), PATTERN_TABLE_WIDTH * sizeof(uint32_t));
+    SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_2, debug_window.pattern_tables_pixels_buffer[1], PATTERN_TABLE_WIDTH * sizeof(uint32_t));
+
 
 
     SDL_SetRenderTarget(debug_window.renderer, NULL);
@@ -359,21 +406,32 @@ int main(int argc, char** argv)
             .zero_page_offset_x = 0,
             .zero_page_offset_y = 0,
 
-            .registers_offset_x = ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH,
+            .registers_offset_x = MAX_3(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE)),
             .registers_offset_y = 0,
             
-            .disassembly_offset_x = ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH,
+            .disassembly_offset_x = MAX_3(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE)),
             .disassembly_offset_y = REGISTERS_BUFFER_HEIGHT,
 
-            .disassembly_active_row_y = 0,
+            .palette_offset_x = 0,
+            .palette_offset_y = ZERO_PAGE_BYTE_BUFFER_HEIGHT,
 
-            .width = ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH + MAX(DISASSEMBLY_BUFFER_WIDTH, REGISTER_WIDTH),
-            .height = MAX((REGISTERS_BUFFER_HEIGHT + DISASSEMBLY_BUFFER_HEIGHT), ZERO_PAGE_BYTE_BUFFER_HEIGHT),
+            .pattern_table_offset_x = 0,
+            .pattern_table_offset_y = ZERO_PAGE_BYTE_BUFFER_HEIGHT + PALETTE_BUFFER_HEIGHT,
+
+            .disassembly_active_row_y = 0,
+            .selected_palette = 0,
+
+            .width = MAX_3(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE)) + MAX_2(DISASSEMBLY_BUFFER_WIDTH, REGISTER_WIDTH),
+            .height = MAX_2((REGISTERS_BUFFER_HEIGHT + DISASSEMBLY_BUFFER_HEIGHT), (ZERO_PAGE_BYTE_BUFFER_HEIGHT + PALETTE_BUFFER_HEIGHT + (PATTERN_TABLE_HEIGHT / FONT_TEXTURE_CHAR_SIZE))),
         },
 
         .disassembly_buffer = { { 0 } },
         .zero_page_buffer = { { 0 } },
         .registers_buffer = { { 0 } },
+        
+        .palette_buffer = { { 0 } },
+
+        .pattern_tables_pixels_buffer = { { 0 } },
     };
     
     Init(&main_window, &debug_window);
@@ -403,7 +461,8 @@ int main(int argc, char** argv)
                     switch (ev.key.keysym.sym) {
                         case SDLK_ESCAPE: quit = true; break;
                         case SDLK_q: quit = true; break;
-                        case SDLK_SPACE: CPUClock(&(emulator.cpu)); break;
+                        case SDLK_SPACE: EmulatorRender(&emulator, main_window.pixels_buffer); break;
+                        case SDLK_f: for (int i = 0; i < 100; i++) {EmulatorRender(&emulator, main_window.pixels_buffer); } break;
                         default: break;
                     }
 					//app.KeyboardDown(ev.key);
@@ -474,7 +533,7 @@ int main(int argc, char** argv)
                 debug_window.zero_page_buffer, 
                 debug_window.registers_buffer
             );
-
+        
             DebugRender(debug_window);
         }
     
@@ -484,7 +543,7 @@ int main(int argc, char** argv)
     	frame_counter++;
         Uint64 current_time = SDL_GetTicks64();
 		if ((current_time - previous_time) > 1000) {
-            //printf("FPS: %d\t\tframe time: %.2f ms\n", frame_counter, (1000.0 / (float)frame_counter));
+            printf("FPS: %d\t\tframe time: %.2f ms\n", frame_counter, (1000.0 / (float)frame_counter));
 			frame_counter = 0;
 			previous_time += 1000;
 		}
