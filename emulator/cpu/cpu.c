@@ -1127,9 +1127,9 @@ void CPUClock(struct CPU* cpu) {
         
         Instruction instruction = instructions[op_code];
         
-        printf("mnemonic: %s  -  opcode: 0x%02X  -  A: 0x%02X  -  X: 0x%02X  -  Y: 0x%02X  -  Status: 0x%02X  -  Stack pointer: 0x%02X  -  Program counter: 0x%04X  -  tick: %lu\n", 
-               instruction.mnemonic, op_code, cpu->registers.a_register, cpu->registers.x_register, cpu->registers.y_register, 
-               cpu->registers.status_flags, cpu->registers.stack_pointer, cpu->registers.program_counter, cpu->tick_counter - 1);
+        //printf("mnemonic: %s  -  opcode: 0x%02X  -  A: 0x%02X  -  X: 0x%02X  -  Y: 0x%02X  -  Status: 0x%02X  -  Stack pointer: 0x%02X  -  Program counter: 0x%04X  -  tick: %lu\n", 
+        //       instruction.mnemonic, op_code, cpu->registers.a_register, cpu->registers.x_register, cpu->registers.y_register, 
+        //       cpu->registers.status_flags, cpu->registers.stack_pointer, cpu->registers.program_counter, cpu->tick_counter - 1);
         
         cpu->remaining_cycles = instruction.cycles;
         uint16_t absolute_address = instruction.address_mode(cpu);
@@ -1141,6 +1141,14 @@ void CPUClock(struct CPU* cpu) {
     cpu->remaining_cycles--;
 }
 
+
+static inline bool IsSafeToReadByte(uint16_t address) {
+    return (address < 0x2000 || address >= 0x4020);
+}
+
+static inline bool IsSafeToReadLittleEndieanWord(uint16_t address) {
+    return (address < 0x1FFF || address >= 0x4021);
+}
 
 uint8_t CPUDisassemble(
     struct CPU* cpu, uint16_t start_address, uint16_t count, 
@@ -1205,25 +1213,25 @@ uint8_t CPUDisassemble(
 
     uint8_t active_row = DISASSEMBLY_BUFFER_HEIGHT;
     char disassembly_row_buffer[DISASSEMBLY_BUFFER_WIDTH + 1];
-
+    
     for (int y = 0; y < count && y < DISASSEMBLY_BUFFER_HEIGHT; y++) {
         for (int i = 0; i < (DISASSEMBLY_BUFFER_WIDTH + 1); i++) {
             disassembly_row_buffer[i] = ' ';
         }        
-
+    
         int x = 0;
         
-        if (dummy_address < 0x2000 || dummy_address >= 0x4020) { // with certain mappers this still could cause side effects but minimizes the chance
+        if (IsSafeToReadByte(dummy_address)) { // with certain mappers this still could cause side effects but minimizes the chance
             uint8_t op_code = ReadByte(cpu, dummy_address);
             Instruction instruction = instructions[op_code];
-
+    
             if ((x + 12) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                 snprintf(&disassembly_row_buffer[x], 12 * sizeof(char), "0x%04X: %s", dummy_address, instruction.mnemonic);
             }
             x += 11;    // the reason for adding one less to x is because snprintf also prints a null terminator and this way the next snprintf overlaps
-
+    
             dummy_address++;
-
+    
             if (instruction.address_mode == &IlligalMode) {
                 if ((x + 5) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                     snprintf(&disassembly_row_buffer[x], 5 * sizeof(char), " ???");
@@ -1243,133 +1251,218 @@ uint8_t CPUDisassemble(
                 x += 4;
             }
             else if (instruction.address_mode == &Immediate) {
-                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                if (IsSafeToReadByte(dummy_address)) {
                     uint8_t temp_address = ReadByte(cpu, dummy_address);
                     dummy_address++;
                     if ((x + 11) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 11 * sizeof(char), " IMM  0x%02X", temp_address);
                     } 
                     x += 10;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &ZeroPage) {
-                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                if (IsSafeToReadByte(dummy_address)) {
                     uint8_t temp_address = ReadByte(cpu, dummy_address);
                     dummy_address++;
                     if ((x + 11) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 11 * sizeof(char), " ZP   0x%02X", temp_address);
                     } 
                     x += 10;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &ZeroPageX) {
-                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                if (IsSafeToReadByte(dummy_address)) {
                     uint8_t temp_address = ReadByte(cpu, dummy_address);
                     dummy_address++;
                     if ((x + 11) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 11 * sizeof(char), " ZPX  0x%02X", temp_address);
                     } 
                     x += 10;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &ZeroPageY) {
-                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                if (IsSafeToReadByte(dummy_address)) {
                     uint8_t temp_address = ReadByte(cpu, dummy_address);
                     dummy_address++;
                     if ((x + 11) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 11 * sizeof(char), " ZPY  0x%02X", temp_address);
                     } 
                     x += 10;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &Relative) {
-                if (dummy_address < 0x2000 || dummy_address >= 0x4020) {
+                if (IsSafeToReadByte(dummy_address)) {
                     uint8_t temp_address = ReadByte(cpu, dummy_address);
                     dummy_address++;
                     if ((x + 11) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 11 * sizeof(char), " REL %c0x%02X", (((int8_t)temp_address < 0) ? '-' : '+'), (((int8_t)temp_address < 0) ? (-1 * (int8_t)temp_address) : temp_address));
                     } 
                     x += 10;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &Absolute) {
-                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                if (IsSafeToReadLittleEndieanWord(dummy_address)) {
                     uint16_t temp_address = ReadLittleEndianWord(cpu, dummy_address);
                     dummy_address += 2;
                     if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " ABS  0x%04X", temp_address);
                     } 
                     x += 12;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &AbsoluteX) {
-                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                if (IsSafeToReadLittleEndieanWord(dummy_address)) {
                     uint16_t temp_address = ReadLittleEndianWord(cpu, dummy_address);
                     dummy_address += 2;
                     if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " ABX  0x%04X", temp_address);
                     } 
                     x += 12;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &AbsoluteY) {
-                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                if (IsSafeToReadLittleEndieanWord(dummy_address)) {
                     uint16_t temp_address = ReadLittleEndianWord(cpu, dummy_address);
                     dummy_address += 2;
                     if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
                         snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " ABY  0x%04X", temp_address);
                     } 
                     x += 12;
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &Indirect) {
-                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
+                if (IsSafeToReadLittleEndieanWord(dummy_address)) {
                     uint16_t temp_address_ptr = ReadLittleEndianWord(cpu, dummy_address);
                     dummy_address += 2;
-
-                    if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
-                        snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " IND  0x%04X", temp_address_ptr);
-                    } 
-                    x += 12;
-
-                    uint16_t temp_address_ptr_to_low = ((temp_address_ptr & 0xFF00) | ((temp_address_ptr + 1) & 0x00FF));
-                    if ((temp_address_ptr < 0x2000 || temp_address_ptr >= 0x4020) && (temp_address_ptr_to_low < 0x2000 || temp_address_ptr_to_low >= 0x4020)) {
-                        uint16_t temp_address = (uint16_t)(ReadByte(cpu, temp_address_ptr_to_low) << 8) | (uint16_t)ReadByte(cpu, temp_address_ptr);
-                      
-                        if ((x + 9) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
-                            snprintf(&disassembly_row_buffer[x], 9 * sizeof(char), "  0x%04X", temp_address);
+            
+                    uint16_t temp_address_ptr_to_high = ((temp_address_ptr & 0xFF00) | ((temp_address_ptr + 1) & 0x00FF));
+                    uint16_t temp_address_ptr_to_low = temp_address_ptr;
+            
+                    if (IsSafeToReadByte(temp_address_ptr_to_low) && IsSafeToReadByte(temp_address_ptr_to_high)) {
+                        uint16_t temp_address = (uint16_t)(ReadByte(cpu, temp_address_ptr_to_high) << 8) | (uint16_t)ReadByte(cpu, temp_address_ptr_to_low);
+                        if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                            snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " IND  0x%04X", temp_address);
                         } 
-                        x += 8;
+                        x += 12;
+                    } else { 
+                        if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                            snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                        }
+                        x += 15;
                     }
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &IndirectX) {
-                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
-                    uint16_t temp_address_ptr = ReadLittleEndianWord(cpu, dummy_address);
-                    dummy_address += 2;
-
-                    if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
-                        snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " INX  0x%04X", temp_address_ptr);
-                    } 
-                    x += 12;
+                if (IsSafeToReadByte(dummy_address)) {
+                    uint8_t temp_address_ptr = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                
+                    uint16_t temp_address_ptr_to_high = (((uint16_t)temp_address_ptr + cpu->registers.x_register + 1) & 0x00FF);
+                    uint16_t temp_address_ptr_to_low = (((uint16_t)temp_address_ptr + cpu->registers.x_register) & 0x00FF);
+                
+                    if (IsSafeToReadByte(temp_address_ptr_to_low) && IsSafeToReadByte(temp_address_ptr_to_high)) {
+                        uint16_t temp_address = (uint16_t)(ReadByte(cpu, temp_address_ptr_to_high) << 8) | (uint16_t)ReadByte(cpu, temp_address_ptr_to_low);
+                        if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                            snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " INX  0x%04X", temp_address);
+                        } 
+                        x += 12;
+                    } else { 
+                        if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                            snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                        }
+                        x += 15;
+                    }
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
             }
             else if (instruction.address_mode == &IndirectY) {
-                if (dummy_address < 0x1FFF || dummy_address >= 0x4021) {
-                    uint16_t temp_address_ptr = ReadLittleEndianWord(cpu, dummy_address);
-                    dummy_address += 2;
-
-                    if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
-                        snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " INY  0x%04X", temp_address_ptr);
-                    } 
-                    x += 12;
+                if (IsSafeToReadByte(dummy_address)) {
+                    uint8_t temp_address_ptr = ReadByte(cpu, dummy_address);
+                    dummy_address++;
+                
+                    uint16_t temp_address_ptr_to_high = (((uint16_t)temp_address_ptr + 1) & 0x00FF);
+                    uint16_t temp_address_ptr_to_low = (uint16_t)temp_address_ptr;
+                
+                    if (IsSafeToReadByte(temp_address_ptr_to_low) && IsSafeToReadByte(temp_address_ptr_to_high)) {
+                        uint16_t temp_address = (uint16_t)(ReadByte(cpu, temp_address_ptr_to_high) << 8) | (uint16_t)ReadByte(cpu, temp_address_ptr_to_low);
+                        temp_address += cpu->registers.y_register;
+                        if ((x + 13) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                            snprintf(&disassembly_row_buffer[x], 13 * sizeof(char), " INY  0x%04X", temp_address);
+                        } 
+                        x += 12;
+                    } else { 
+                        if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                            snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                        }
+                        x += 15;
+                    }
+                } else { 
+                    if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                        snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+                    }
+                    x += 15;
                 }
-            } else {
+            }
+            else {
                 printf("unknown addressing mode\n");
                 exit(1);
             }
+        } else { 
+            if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
+                snprintf(&disassembly_row_buffer[x], 16 * sizeof(char), " UNSAFE ADDRESS");
+            }
+            x += 15;
         }
-
+    
         if (x >= DISASSEMBLY_BUFFER_WIDTH) {
             // this means something didn't fit
             printf("disassembly character buffer too thin\n");
@@ -1378,13 +1471,13 @@ uint8_t CPUDisassemble(
         
         disassembly_row_buffer[x] = ' ';    // removes null terminator at the end
         memcpy(&disassembly_buffer[y], &disassembly_row_buffer[0], DISASSEMBLY_BUFFER_WIDTH * sizeof(char));
-
+    
         if (cpu->registers.program_counter >= prev_dummy_address && cpu->registers.program_counter < dummy_address) {
             active_row = y;
         }
-
+    
         prev_dummy_address = dummy_address;
     }
-
+    
     return active_row;
 }
