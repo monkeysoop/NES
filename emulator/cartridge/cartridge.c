@@ -97,6 +97,9 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
 
         if (header.TV_system == 1) {
             cartridge->tv_system = PAL;
+            printf("PAL TV system not supported\n");
+            fclose(cartridge_file);
+            exit(1);
         } else {
             cartridge->tv_system = NTSC;
         }
