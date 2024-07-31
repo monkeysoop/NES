@@ -8,11 +8,14 @@
 
 
 #define PALETTE_RAM_SIZE 0x20   // 32 bytes
-
+#define VRAM_SIZE 0x0800    // 2 KB
 
 struct PPUBus {
+    uint8_t ppu_vram[VRAM_SIZE];
     uint8_t palette[PALETTE_RAM_SIZE];
     
+    uint8_t ppu_vram_open_bus_data;
+
     struct Cartridge* cartridge;
 };
 
