@@ -25,36 +25,38 @@ void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename) {
 
 }
 
-void EmulatorTick(struct Emulator* emulator) {
+void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
+    uint64_t temp = 0;
     switch (emulator->cartridge.tv_system) {
         case NTSC: 
-            printf("NTSC tv\n");
             while (emulator->ppu.render_state != FINISHED) {
-                PPUClockNTSC(&emulator->ppu);
-                PPUClockNTSC(&emulator->ppu);
-                PPUClockNTSC(&emulator->ppu);
+                PPUClockNTSC(&emulator->ppu, pixels_buffer);
+                //PPUClockNTSC(&emulator->ppu, pixels_buffer);
+                //PPUClockNTSC(&emulator->ppu, pixels_buffer);
                 
-                CPUClock(&emulator->cpu);
+                if (temp % 3 == 2) {
+                    CPUClock(&emulator->cpu);
+                    // apu
+                }
 
-                // apu
+                temp++;
             }
             break;
         case PAL:
-            printf("PAL tv\n");
-            uint8_t temp = 0;
             while (emulator->ppu.render_state != FINISHED) {
-                temp++;
-                PPUClockPAL(&emulator->ppu);
-                PPUClockPAL(&emulator->ppu);
-                PPUClockPAL(&emulator->ppu);
-                if (temp == 5) {
-                    temp = 0;
-                    PPUClockPAL(&emulator->ppu);
+                PPUClockPAL(&emulator->ppu, pixels_buffer);
+                //PPUClockPAL(&emulator->ppu, pixels_buffer);
+                //PPUClockPAL(&emulator->ppu, pixels_buffer);
+                if (temp % 15 == 14 && emulator->ppu.render_state != FINISHED) {    // makes the ratio of ppu and cpu cycles to 3.2 : 1 instead of 3 : 1
+                    PPUClockPAL(&emulator->ppu, pixels_buffer);
                 }
 
-                CPUClock(&emulator->cpu);
+                if (temp % 3 == 2) {
+                    CPUClock(&emulator->cpu);
+                    // apu
+                }
 
-                // apu
+                temp++;
             } 
             break;
     }

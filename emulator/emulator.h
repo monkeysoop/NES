@@ -23,6 +23,6 @@ void EmulatorReset(struct Emulator* emulator);
 
 void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename);
 
-void EmulatorTick(struct Emulator* emulator);
+void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 
 #endif
