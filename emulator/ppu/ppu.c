@@ -3,23 +3,12 @@
 
 #include "ppu.h"
 
-static const uint32_t nes_palette_colors_rgba[64] = {
-    0xff666666, 0xff002a88, 0xff1412a7, 0xff3b00a4, 0xff5c007e, 0xff6e0040, 0xff6c0600, 0xff561d00,
-    0xff333500, 0xff0b4800, 0xff005200, 0xff004f08, 0xff00404d, 0xff000000, 0xff000000, 0xff000000,
-    0xffadadad, 0xff155fd9, 0xff4240ff, 0xff7527fe, 0xffa01acc, 0xffb71e7b, 0xffb53120, 0xff994e00,
-    0xff6b6d00, 0xff388700, 0xff0c9300, 0xff008f32, 0xff007c8d, 0xff000000, 0xff000000, 0xff000000,
-    0xfffffeff, 0xff64b0ff, 0xff9290ff, 0xffc676ff, 0xfff36aff, 0xfffe6ecc, 0xfffe8170, 0xffea9e22,
-    0xffbcbe00, 0xff88d800, 0xff5ce430, 0xff45e082, 0xff48cdde, 0xff4f4f4f, 0xff000000, 0xff000000,
-    0xfffffeff, 0xffc0dfff, 0xffd3d2ff, 0xffe8c8ff, 0xfffbc2ff, 0xfffec4ea, 0xfffeccc5, 0xfff7d8a5,
-    0xffe4e594, 0xffcfef96, 0xffbdf4ab, 0xffb3f3cc, 0xffb5ebf2, 0xffb8b8b8, 0xff000000, 0xff000000,
-};
-
 
 
 void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
-    ppu->status_register = 0b10100000; // wiki says these bits are often set
+    ppu->status_register = 0; // wiki says these bits are often set
     ppu->oam_address_register = 0;
     ppu->oam_data_register = 0;
     ppu->scroll_register = 0;
@@ -47,7 +36,7 @@ void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
 void PPUReset(struct PPU* ppu, enum TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
-    ppu->status_register = ppu->status_register & 0b10000000;
+    ppu->status_register = ppu->status_register & VERTICAL_BLANK_BIT;
     ppu->scroll_register = 0;
     ppu->ppu_data_register = 0;
 
@@ -68,13 +57,16 @@ void PPUReset(struct PPU* ppu, enum TVSystem tv_system) {
 }
 
 
-bool PPUClockNTSC(struct PPU* ppu) {
-    bool interrupt_cpu = false;
+bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
+    bool interrupt_cpu = false; // the reason why the cartridge gets interrupted from here and the cpu isn't is 
+                                // because PPU struct can't have a reference to CPU (that would create circular dependency)
+                                // so either is has a void pointer to a callback or returns a bool value to the emulator
+
     switch (ppu->render_state) {
         case RENDER: 
             if (ppu->cycle > 0 && ppu->cycle <= SCANLINE_VISIBLE_DOTS) {
                 uint8_t dot = ppu->cycle - 1;   // dot is basically x
-                uint8_t x_fine = (ppu->x + dot) & 0x07;
+                uint8_t fine_x = (ppu->x + dot) & 0x07;
                 
                 uint8_t background_color_address = 0;
                 uint8_t background_opaque = 0;
@@ -90,19 +82,19 @@ bool PPUClockNTSC(struct PPU* ppu) {
                         // render background
                         uint16_t tile_address = 0x2000 | (ppu->v & 0x0FFF);
 
-                        uint16_t pattern_address = (((uint16_t)PPUBusRead(ppu->ppu_bus, tile_address) >> 4) + ((ppu->v >> 12) & 0x0007)) 
+                        uint16_t pattern_address = (((uint16_t)PPUBusRead(ppu->ppu_bus, tile_address) << 4) + ((ppu->v >> 12) & 0x0007)) 
                                                  | ((ppu->ctrl_register & BACKGROUND_PATTERN_TABLE_ADDRESS_BIT) << 8);
                         uint16_t attribute_address = 0x23C0 | (ppu->v & 0x0C00) | ((ppu->v >> 4) & 0x0038) | ((ppu->v >> 2) & 0x0007);
 
-                        background_color_address = ((PPUBusRead(ppu->ppu_bus, pattern_address) >> (x_fine ^ 0x07)) & 0x01)
-                                                 | ((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> ((x_fine ^ 0x07) - 1)) & 0x02);
+                        background_color_address = ((PPUBusRead(ppu->ppu_bus, pattern_address) >> (fine_x ^ 0x07)) & 0x01)
+                                                 | ((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> ((fine_x ^ 0x07) - 1)) & 0x02);
                         
                         background_opaque = background_color_address;
 
                         background_color_address |= (((PPUBusRead(ppu->ppu_bus, attribute_address) >> (((ppu->v >> 4) & 0x04) | (ppu->v & 0x02))) & 0x03) << 2);
                     }
 
-                    if (x_fine == 7) {
+                    if (fine_x == 7) {
                         if ((ppu->v & 0x001F) == 0x001F) {
                             ppu->v &= ~0x001F;
                             ppu->v ^= 0x0400;
@@ -120,8 +112,8 @@ bool PPUClockNTSC(struct PPU* ppu) {
                 if (sprite_opaque && (!background_opaque || sprite_in_foreground)) {
                     color_address = sprite_color_address;
                 }
-
-                nes_palette_colors_rgba[PPUBusRead(ppu->ppu_bus, (0x3F00 + color_address))];
+                uint32_t color_rgba = nes_palette_colors_rgba[PPUBusRead(ppu->ppu_bus, (0x3F00 + color_address))];
+                pixels_buffer[ppu->scanline * NES_SCREEN_WIDTH + dot] = color_rgba;
             } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 1)) && (ppu->mask_register & SHOW_BACKGROUND_BIT)) {
                 if ((ppu->v & 0x7000) != 0x7000) {
                     ppu->v += 0x1000;
@@ -143,6 +135,7 @@ bool PPUClockNTSC(struct PPU* ppu) {
                 ppu->v |= ppu->t & 0x041F;
             } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                 PPUBusScanlineIRQ(ppu->ppu_bus);
+                interrupt_cpu = true;
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {
                 // TODO: reset oam
                 ppu->scanline++;
@@ -199,6 +192,7 @@ bool PPUClockNTSC(struct PPU* ppu) {
 
             if (ppu->scanline == NTSC_PRE_RENDER_SCANLINE_END) {
                 ppu->render_state = RENDER;
+                ppu->scanline = 0;
                 ppu->is_odd_frame = !(ppu->is_odd_frame);
             }
             break;
@@ -212,9 +206,47 @@ bool PPUClockNTSC(struct PPU* ppu) {
     return interrupt_cpu;
 }
 
-bool PPUClockPAL(struct PPU* ppu) {
+bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
     printf("PAL not implemented\n");
     exit(1);
+}
+
+
+uint8_t DebugView(
+    struct PPU* ppu, 
+    uint8_t palette_buffer[PALETTE_BUFFER_HEIGHT][PALETTE_BUFFER_WIDTH], 
+    uint32_t pattern_tables_pixels_buffer[2][PATTERN_TABLE_WIDTH * PATTERN_TABLE_HEIGHT],
+    uint8_t selected_palette
+) {
+    for (int y = 0; y < PALETTE_BUFFER_HEIGHT; y++) {
+        for (int x = 0; x < PALETTE_BUFFER_WIDTH; x++) {
+            palette_buffer[y][x] = PPUBusRead(ppu->ppu_bus, 0x3F00 + (y * PALETTE_BUFFER_WIDTH + x));
+        }
+    }
+
+
+    for (uint8_t i = 0; i < 2; i++) {
+        for (uint8_t tile_y = 0; tile_y < (PATTERN_TABLE_HEIGHT / 8); tile_y++) {
+            for (uint8_t tile_x = 0; tile_x < (PATTERN_TABLE_WIDTH / 8); tile_x++) {
+                for (uint8_t fine_y = 0; fine_y < 8; fine_y++) {
+                    uint8_t tile_id = tile_y * (PATTERN_TABLE_WIDTH / 8) + tile_x;
+                    
+                    uint16_t pattern_address_lower = (i * 0x1000) | (tile_id << 4) | 0x0000 | fine_y;
+                    uint16_t pattern_address_upper = (i * 0x1000) | (tile_id << 4) | 0x0008 | fine_y;
+
+                    uint8_t background_color_address_lower = PPUBusRead(ppu->ppu_bus, pattern_address_lower);
+                    uint8_t background_color_address_upper = PPUBusRead(ppu->ppu_bus, pattern_address_upper);
+
+                    for (uint8_t fine_x = 0; fine_x < 8; fine_x++) {
+                        uint8_t background_color_address = ((background_color_address_lower >> (fine_x ^ 0x07)) & 0x01)
+                                                         | ((background_color_address_upper >> ((fine_x ^ 0x07) - 1)) & 0x02);
+
+                        pattern_tables_pixels_buffer[i][(tile_y * 8 + fine_y) * PATTERN_TABLE_WIDTH + (tile_x * 8 + fine_x)] = nes_palette_colors_rgba[PPUBusRead(ppu->ppu_bus, 0x3F00 | ((selected_palette & 0x07) << 2) | background_color_address)];
+                    }
+                }
+            }
+        }
+    }
 }
 
 

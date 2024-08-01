@@ -118,6 +118,12 @@ void PPUReset(struct PPU* ppu, enum TVSystem tv_system);
 bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 
+uint8_t DebugView(
+    struct PPU* ppu, 
+    uint8_t palette_buffer[PALETTE_BUFFER_HEIGHT][PALETTE_BUFFER_WIDTH], 
+    uint32_t pattern_tables_pixels_buffer[2][PATTERN_TABLE_WIDTH * PATTERN_TABLE_HEIGHT],
+    uint8_t selected_palette
+);
 
 void PPUWriteCtrl(struct PPU* ppu, const uint8_t data);
 void PPUWriteMask(struct PPU* ppu, const uint8_t data);

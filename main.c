@@ -18,7 +18,7 @@
 #define MAX_2(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN_2(a, b) (((a) < (b)) ? (a) : (b))
 
-# define MAX_3(a, b, c) MAX_2(a, MAX_2(b, c))
+#define MAX_3(a, b, c) MAX_2(a, MAX_2(b, c))
 
 struct DebugLayout {
     uint8_t zero_page_offset_x;
@@ -70,7 +70,6 @@ struct DebugWindow {
 
 
 void Clean(struct MainWindow main_window, struct DebugWindow debug_window) {
-
     if (debug_window.font_texture != NULL) {
         SDL_DestroyTexture(debug_window.font_texture);
     }
@@ -95,7 +94,6 @@ void Clean(struct MainWindow main_window, struct DebugWindow debug_window) {
 }
 
 void Init(struct MainWindow* main_window, struct DebugWindow* debug_window) {
-
     main_window->window = SDL_CreateWindow(
         "NES emulator",
         SDL_WINDOWPOS_UNDEFINED,
@@ -122,7 +120,7 @@ void Init(struct MainWindow* main_window, struct DebugWindow* debug_window) {
     main_window->texture = SDL_CreateTexture(
         main_window->renderer, 
         SDL_PIXELFORMAT_RGBA8888, 
-        SDL_TEXTUREACCESS_TARGET, 
+        SDL_TEXTUREACCESS_STREAMING, 
         NES_SCREEN_WIDTH,
         NES_SCREEN_HEIGHT
     );
@@ -333,14 +331,14 @@ void DebugRender(struct DebugWindow debug_window) {
     
     // pattern table
     SDL_Rect pattern_table_target_rect_1 = {
-        .x =((debug_window.layout.pattern_table_offset_x) * FONT_TEXTURE_CHAR_SIZE), 
+        .x=((debug_window.layout.pattern_table_offset_x) * FONT_TEXTURE_CHAR_SIZE), 
         .y=((debug_window.layout.pattern_table_offset_y) * FONT_TEXTURE_CHAR_SIZE), 
         .w=PATTERN_TABLE_WIDTH, 
         .h=PATTERN_TABLE_HEIGHT
     };
 
     SDL_Rect pattern_table_target_rect_2 = {
-        .x =((debug_window.layout.pattern_table_offset_x) * FONT_TEXTURE_CHAR_SIZE + PATTERN_TABLE_WIDTH),  // the offsets are in terms of characters but the PATTERN_TABLE_WIDTH is in pixels
+        .x=((debug_window.layout.pattern_table_offset_x) * FONT_TEXTURE_CHAR_SIZE + PATTERN_TABLE_WIDTH),  // the offsets are in terms of characters but the PATTERN_TABLE_WIDTH is in pixels
         .y=((debug_window.layout.pattern_table_offset_y) * FONT_TEXTURE_CHAR_SIZE), 
         .w=PATTERN_TABLE_WIDTH, 
         .h=PATTERN_TABLE_HEIGHT
@@ -348,14 +346,11 @@ void DebugRender(struct DebugWindow debug_window) {
 
 
 
-    SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_1, &(debug_window.pattern_tables_pixels_buffer[0][0]), PATTERN_TABLE_WIDTH * sizeof(uint32_t));
+    SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_1, debug_window.pattern_tables_pixels_buffer[0], PATTERN_TABLE_WIDTH * sizeof(uint32_t));
     SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_2, debug_window.pattern_tables_pixels_buffer[1], PATTERN_TABLE_WIDTH * sizeof(uint32_t));
-
-
-
+    
     SDL_SetRenderTarget(debug_window.renderer, NULL);
-    
-    
+
     SDL_RenderCopyEx(
         debug_window.renderer, 
         debug_window.texture, 
@@ -471,6 +466,7 @@ int main(int argc, char** argv)
 					switch (ev.key.keysym.sym) {
                         case SDLK_i: i_pressed = true; break;
                         case SDLK_r: EmulatorReset(&emulator); break;
+                        case SDLK_p: debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; break;
                         case SDLK_t: emulator.cpu.registers.program_counter = 0xC000; break;
                         default: break;
                     }
@@ -534,6 +530,8 @@ int main(int argc, char** argv)
                 debug_window.registers_buffer
             );
         
+            DebugView(&(emulator.ppu), debug_window.palette_buffer, debug_window.pattern_tables_pixels_buffer, debug_window.layout.selected_palette);
+            
             DebugRender(debug_window);
         }
     
