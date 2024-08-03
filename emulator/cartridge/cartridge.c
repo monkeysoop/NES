@@ -128,7 +128,7 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
             case ColorDreams:
             case GxROM:
             default: 
-                printf("Mapper not supported\n"); 
+                printf("Mapper not supported  id: %d\n", mapper_id); 
                 fclose(cartridge_file); 
                 exit(1);
         }
@@ -191,14 +191,14 @@ void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring
     switch (mirroring) {
         case VERTICAL_MIRRORING: 
             cartridge->mirroring_offsets[0] = 0x0;
-            cartridge->mirroring_offsets[1] = 0x0;
-            cartridge->mirroring_offsets[2] = 0x400;
+            cartridge->mirroring_offsets[1] = 0x400;
+            cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case HORIZONTAL_MIRRORING: 
             cartridge->mirroring_offsets[0] = 0x0;
-            cartridge->mirroring_offsets[1] = 0x400;
-            cartridge->mirroring_offsets[2] = 0x0;
+            cartridge->mirroring_offsets[1] = 0x0;
+            cartridge->mirroring_offsets[2] = 0x400;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case ONE_SCREEN_MIRRORING: 
