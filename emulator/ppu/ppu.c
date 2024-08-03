@@ -8,7 +8,7 @@
 void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
     ppu->ctrl_register = 0;
     ppu->mask_register = 0;
-    ppu->status_register = 0; // wiki says these bits are often set
+    ppu->status_register = 0;
     ppu->oam_address_register = 0;
     ppu->oam_data_register = 0;
     ppu->scroll_register = 0;
@@ -87,7 +87,8 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                         uint16_t attribute_address = 0x23C0 | (ppu->v & 0x0C00) | ((ppu->v >> 4) & 0x0038) | ((ppu->v >> 2) & 0x0007);
 
                         background_color_address = ((PPUBusRead(ppu->ppu_bus, pattern_address) >> (fine_x ^ 0x07)) & 0x01)
-                                                 | ((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> ((fine_x ^ 0x07) - 1)) & 0x02);
+                                                // | ((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> ((fine_x ^ 0x07) - 1)) & 0x02);
+                                                 | (((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> (fine_x ^ 0x07)) & 0x01) << 1);
                         
                         background_opaque = background_color_address;
 
@@ -274,7 +275,6 @@ void PPUWriteScroll(struct PPU* ppu, const uint8_t data) {
     if (ppu->w) {
         // 2. write
         ppu->t &= 0b1000110000011111;
-        //ppu->t &= ~0x73E0;
         ppu->t |= ((data & 0b00000111) << 12) | ((data & 0x11111000) << 2);
         ppu->w = 0; 
     } else {
