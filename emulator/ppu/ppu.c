@@ -84,14 +84,13 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 
                         uint16_t pattern_address = (((uint16_t)PPUBusRead(ppu->ppu_bus, tile_address) << 4) + ((ppu->v >> 12) & 0x0007)) 
                                                  | ((ppu->ctrl_register & BACKGROUND_PATTERN_TABLE_ADDRESS_BIT) << 8);
-                        uint16_t attribute_address = 0x23C0 | (ppu->v & 0x0C00) | ((ppu->v >> 4) & 0x0038) | ((ppu->v >> 2) & 0x0007);
 
                         background_color_address = ((PPUBusRead(ppu->ppu_bus, pattern_address) >> (fine_x ^ 0x07)) & 0x01)
-                                                // | ((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> ((fine_x ^ 0x07) - 1)) & 0x02);
                                                  | (((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> (fine_x ^ 0x07)) & 0x01) << 1);
                         
                         background_opaque = background_color_address;
 
+                        uint16_t attribute_address = 0x23C0 | (ppu->v & 0x0C00) | ((ppu->v >> 4) & 0x0038) | ((ppu->v >> 2) & 0x0007);
                         background_color_address |= (((PPUBusRead(ppu->ppu_bus, attribute_address) >> (((ppu->v >> 4) & 0x04) | (ppu->v & 0x02))) & 0x03) << 2);
                     }
 
@@ -110,7 +109,9 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 
 
                 uint8_t color_address = background_color_address;
-                if (sprite_opaque && (!background_opaque || sprite_in_foreground)) {
+                if (!background_opaque && !sprite_opaque) {
+                    color_address = 0;
+                } else if (sprite_opaque && (!background_opaque || sprite_in_foreground)) {
                     color_address = sprite_color_address;
                 }
                 uint32_t color_rgba = nes_palette_colors_rgba[PPUBusRead(ppu->ppu_bus, (0x3F00 + color_address))];
@@ -120,23 +121,22 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                     ppu->v += 0x1000;
                 } else {
                     ppu->v &= ~0x7000;
-                    uint16_t y_coarse = (ppu->v & 0x03E0) >> 5;
-                    if (y_coarse == 29) {
-                        y_coarse = 0;
+                    uint16_t coarse_y = (ppu->v & 0x03E0) >> 5;
+                    if (coarse_y == 29) {
+                        coarse_y = 0;
                         ppu->v ^= 0x0800;
-                    } else if (y_coarse == 31) {
-                        y_coarse = 0;
+                    } else if (coarse_y == 31) {
+                        coarse_y = 0;
                     } else {
-                        y_coarse += 1;
+                        coarse_y++;
                     }
-                    ppu->v = (ppu->v & ~0x03E0) | (y_coarse << 5);
+                    ppu->v = (ppu->v & ~0x03E0) | (coarse_y << 5);
                 }
             } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 2)) && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                 ppu->v &= ~0x041F;
                 ppu->v |= ppu->t & 0x041F;
             } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                 PPUBusScanlineIRQ(ppu->ppu_bus);
-                interrupt_cpu = true;
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {
                 // TODO: reset oam
                 ppu->scanline++;
@@ -159,6 +159,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
             break;
         case VERTICAL_BLANKING: 
             if (ppu->cycle == 1 && ppu->scanline == NTSC_POST_RENDER_SCANLINE_END) {
+                interrupt_cpu = true;
                 ppu->status_register |= VERTICAL_BLANK_BIT;
                 if (ppu->ctrl_register & GENERATE_NMI_BIT) {
                     interrupt_cpu = true;
@@ -213,11 +214,13 @@ bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_
 }
 
 
-uint8_t DebugView(
+void DebugView(
     struct PPU* ppu, 
     uint8_t palette_buffer[PALETTE_BUFFER_HEIGHT][PALETTE_BUFFER_WIDTH], 
     uint32_t pattern_tables_pixels_buffer[2][PATTERN_TABLE_WIDTH * PATTERN_TABLE_HEIGHT],
-    uint8_t selected_palette
+    uint8_t selected_palette,
+    char nametable_buffer[NAMETABLE_BYTE_BUFFER_HEIGHT][NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH],
+    uint8_t selected_nametable
 ) {
     for (int y = 0; y < PALETTE_BUFFER_HEIGHT; y++) {
         for (int x = 0; x < PALETTE_BUFFER_WIDTH; x++) {
@@ -247,6 +250,28 @@ uint8_t DebugView(
                 }
             }
         }
+    }
+
+
+    uint16_t address_offset;
+    switch (selected_nametable) {
+        case 0: address_offset = 0x2000; break;
+        case 1: address_offset = 0x2400; break;
+        case 2: address_offset = 0x2800; break;
+        case 3: address_offset = 0x2C00; break;
+        default:
+            printf("select a nametable 0: 0x2000  1: 0x2400  2: 0x2800 3: 0x2C00\n");
+            exit(1);
+    }
+
+    char name_table_row_buffer[NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH + 1];
+
+    for (int y = 0; y < NAMETABLE_BYTE_BUFFER_HEIGHT; y++) {
+        for (int x = 0; x < NAMETABLE_BYTE_BUFFER_WIDTH; x++) {
+            uint16_t temp_address = address_offset | (y * NAMETABLE_BYTE_BUFFER_WIDTH + x);
+            snprintf(&name_table_row_buffer[x * NAMETABLE_BYTE_WIDTH], (NAMETABLE_BYTE_WIDTH + 1) * sizeof(char), "%02X ", PPUBusRead(ppu->ppu_bus, temp_address));
+        }
+        memcpy(&nametable_buffer[y], &name_table_row_buffer[0], NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH * sizeof(char));
     }
 }
 
@@ -280,8 +305,8 @@ void PPUWriteScroll(struct PPU* ppu, const uint8_t data) {
     } else {
         // 1. write
         ppu->t &= 0b1111111111100000;
-        ppu->t |= (data >> 3);// this is unneceseary: & 0b0000000000011111;
-        ppu->x = data & 0x0007;
+        ppu->t |= (data >> 3);
+        ppu->x = data & 0b0000000000000111;
         ppu->w = 1;
     }
 }
