@@ -19,6 +19,7 @@
 #define MIN_2(a, b) (((a) < (b)) ? (a) : (b))
 
 #define MAX_3(a, b, c) MAX_2(a, MAX_2(b, c))
+#define MAX_4(a, b, c, d) MAX_2(a, MAX_3(b, c, d))
 
 struct DebugLayout {
     uint8_t zero_page_offset_x;
@@ -36,8 +37,12 @@ struct DebugLayout {
     uint8_t pattern_table_offset_x;
     uint8_t pattern_table_offset_y;
 
+    uint8_t nametable_offset_x;
+    uint8_t nametable_offset_y;
+
     uint8_t disassembly_active_row_y;
     uint8_t selected_palette;
+    uint8_t selected_nametable;
 
     uint8_t width;
     uint8_t height;
@@ -66,6 +71,8 @@ struct DebugWindow {
     uint8_t palette_buffer[PALETTE_BUFFER_HEIGHT][PALETTE_BUFFER_WIDTH];
 
     uint32_t pattern_tables_pixels_buffer[2][PATTERN_TABLE_WIDTH * PATTERN_TABLE_HEIGHT];
+
+    char nametable_buffer[NAMETABLE_BYTE_BUFFER_HEIGHT][NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH];
 };
 
 
@@ -98,8 +105,8 @@ void Init(struct MainWindow* main_window, struct DebugWindow* debug_window) {
         "NES emulator",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        600, 
-        400,
+        NES_SCREEN_WIDTH * 4, 
+        NES_SCREEN_HEIGHT * 4,
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
     );
     if (main_window->window == NULL) {
@@ -349,6 +356,41 @@ void DebugRender(struct DebugWindow debug_window) {
     SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_1, debug_window.pattern_tables_pixels_buffer[0], PATTERN_TABLE_WIDTH * sizeof(uint32_t));
     SDL_UpdateTexture(debug_window.texture, &pattern_table_target_rect_2, debug_window.pattern_tables_pixels_buffer[1], PATTERN_TABLE_WIDTH * sizeof(uint32_t));
     
+    // nametable
+    SDL_SetTextureColorMod(debug_window.font_texture, 0xFF, 0xFF, 0x00);
+    for (int y = 0; y < NAMETABLE_BYTE_BUFFER_HEIGHT; y++) {
+        for (int x = 0; x < NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH; x++) {
+            uint8_t c = (uint8_t)debug_window.nametable_buffer[y][x];
+    
+            uint8_t c_x = c % FONT_TEXTURE_CHARS_WIDTH;
+            uint8_t c_y = c / FONT_TEXTURE_CHARS_WIDTH;
+    
+            SDL_Rect char_rect = {
+                .x=(c_x * FONT_TEXTURE_CHAR_SIZE), 
+                .y=(c_y * FONT_TEXTURE_CHAR_SIZE), 
+                .w=FONT_TEXTURE_CHAR_SIZE, 
+                .h=FONT_TEXTURE_CHAR_SIZE};
+
+            SDL_Rect target_rect = {
+                .x =((debug_window.layout.nametable_offset_x + x) * FONT_TEXTURE_CHAR_SIZE), 
+                .y=((debug_window.layout.nametable_offset_y + y) * FONT_TEXTURE_CHAR_SIZE), 
+                .w=FONT_TEXTURE_CHAR_SIZE, 
+                .h=FONT_TEXTURE_CHAR_SIZE
+            };
+
+            SDL_RenderCopyEx(
+                debug_window.renderer, 
+                debug_window.font_texture, 
+                &char_rect,
+                &target_rect,
+                0.0,
+                NULL,
+                SDL_FLIP_NONE
+            );
+        }
+    }
+
+
     SDL_SetRenderTarget(debug_window.renderer, NULL);
 
     SDL_RenderCopyEx(
@@ -401,10 +443,10 @@ int main(int argc, char** argv)
             .zero_page_offset_x = 0,
             .zero_page_offset_y = 0,
 
-            .registers_offset_x = MAX_3(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE)),
+            .registers_offset_x = MAX_4(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE), (NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH)),
             .registers_offset_y = 0,
             
-            .disassembly_offset_x = MAX_3(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE)),
+            .disassembly_offset_x = MAX_4(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE), (NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH)),
             .disassembly_offset_y = REGISTERS_BUFFER_HEIGHT,
 
             .palette_offset_x = 0,
@@ -413,11 +455,15 @@ int main(int argc, char** argv)
             .pattern_table_offset_x = 0,
             .pattern_table_offset_y = ZERO_PAGE_BYTE_BUFFER_HEIGHT + PALETTE_BUFFER_HEIGHT,
 
+            .nametable_offset_x = 0,
+            .nametable_offset_y = (ZERO_PAGE_BYTE_BUFFER_HEIGHT + PALETTE_BUFFER_HEIGHT + (PATTERN_TABLE_HEIGHT / FONT_TEXTURE_CHAR_SIZE)),
+
             .disassembly_active_row_y = 0,
             .selected_palette = 0,
+            .selected_nametable = 0,
 
-            .width = MAX_3(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE)) + MAX_2(DISASSEMBLY_BUFFER_WIDTH, REGISTER_WIDTH),
-            .height = MAX_2((REGISTERS_BUFFER_HEIGHT + DISASSEMBLY_BUFFER_HEIGHT), (ZERO_PAGE_BYTE_BUFFER_HEIGHT + PALETTE_BUFFER_HEIGHT + (PATTERN_TABLE_HEIGHT / FONT_TEXTURE_CHAR_SIZE))),
+            .width = MAX_4(ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH, PALETTE_BUFFER_WIDTH, ((2 * PATTERN_TABLE_WIDTH) / FONT_TEXTURE_CHAR_SIZE), (NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH)) + MAX_2(DISASSEMBLY_BUFFER_WIDTH, REGISTER_WIDTH),
+            .height = MAX_2((REGISTERS_BUFFER_HEIGHT + DISASSEMBLY_BUFFER_HEIGHT), (ZERO_PAGE_BYTE_BUFFER_HEIGHT + PALETTE_BUFFER_HEIGHT + (PATTERN_TABLE_HEIGHT / FONT_TEXTURE_CHAR_SIZE) + NAMETABLE_BYTE_BUFFER_HEIGHT)),
         },
 
         .disassembly_buffer = { { 0 } },
@@ -427,6 +473,8 @@ int main(int argc, char** argv)
         .palette_buffer = { { 0 } },
 
         .pattern_tables_pixels_buffer = { { 0 } },
+
+        .nametable_buffer = { { 0 } },
     };
     
     Init(&main_window, &debug_window);
@@ -457,7 +505,7 @@ int main(int argc, char** argv)
                         case SDLK_ESCAPE: quit = true; break;
                         case SDLK_q: quit = true; break;
                         case SDLK_SPACE: EmulatorRender(&emulator, main_window.pixels_buffer); break;
-                        case SDLK_f: for (int i = 0; i < 100; i++) {EmulatorRender(&emulator, main_window.pixels_buffer); } break;
+                        case SDLK_f: for (int i = 0; i < 50000; i++) {EmulatorRender(&emulator, main_window.pixels_buffer); } break;
                         default: break;
                     }
 					//app.KeyboardDown(ev.key);
@@ -467,6 +515,7 @@ int main(int argc, char** argv)
                         case SDLK_i: i_pressed = true; break;
                         case SDLK_r: EmulatorReset(&emulator); break;
                         case SDLK_p: debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; break;
+                        case SDLK_n: debug_window.layout.selected_nametable = (debug_window.layout.selected_nametable + 1) % 4; break;
                         case SDLK_t: emulator.cpu.registers.program_counter = 0xC000; break;
                         default: break;
                     }
@@ -530,7 +579,14 @@ int main(int argc, char** argv)
                 debug_window.registers_buffer
             );
         
-            DebugView(&(emulator.ppu), debug_window.palette_buffer, debug_window.pattern_tables_pixels_buffer, debug_window.layout.selected_palette);
+            DebugView(
+                &(emulator.ppu), 
+                debug_window.palette_buffer, 
+                debug_window.pattern_tables_pixels_buffer, 
+                debug_window.layout.selected_palette, 
+                debug_window.nametable_buffer, 
+                debug_window.layout.selected_nametable
+            );
             
             DebugRender(debug_window);
         }
