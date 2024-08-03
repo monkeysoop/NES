@@ -24,6 +24,10 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 #define PATTERN_TABLE_WIDTH 128
 #define PATTERN_TABLE_HEIGHT 128
 
+#define NAMETABLE_BYTE_WIDTH 3
+
+#define NAMETABLE_BYTE_BUFFER_WIDTH 32
+#define NAMETABLE_BYTE_BUFFER_HEIGHT 32
 
 #define BASE_NAMETABLE_BITS                  0b00000011
 #define VRAM_ADDRESS_INCREMENT_BIT           0b00000100
@@ -118,11 +122,13 @@ void PPUReset(struct PPU* ppu, enum TVSystem tv_system);
 bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 
-uint8_t DebugView(
+void DebugView(
     struct PPU* ppu, 
     uint8_t palette_buffer[PALETTE_BUFFER_HEIGHT][PALETTE_BUFFER_WIDTH], 
     uint32_t pattern_tables_pixels_buffer[2][PATTERN_TABLE_WIDTH * PATTERN_TABLE_HEIGHT],
-    uint8_t selected_palette
+    uint8_t selected_palette,
+    char nametable_buffer[NAMETABLE_BYTE_BUFFER_HEIGHT][NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH],
+    uint8_t selected_nametable
 );
 
 void PPUWriteCtrl(struct PPU* ppu, const uint8_t data);
