@@ -103,6 +103,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                         }
                     }
                 }
+
                 if ((ppu->mask_register & SHOW_SPRITES_BIT) && ((ppu->mask_register & SHOW_SPRITES_LEFTMOST_BIT) || dot >= 8)) {
                     // TODO: render sprites
                 }
@@ -111,6 +112,9 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 uint8_t color_address = background_color_address;
                 if (!background_opaque && !sprite_opaque) {
                     color_address = 0;
+                    if ((ppu->v & 0x3F00) == 0x3F00) {
+                        color_address = ppu->v & 0x1F;
+                    }
                 } else if (sprite_opaque && (!background_opaque || sprite_in_foreground)) {
                     color_address = sprite_color_address;
                 }
@@ -132,10 +136,10 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                     }
                     ppu->v = (ppu->v & ~0x03E0) | (coarse_y << 5);
                 }
-            } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 2)) && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
+            } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 2)) && (ppu->mask_register & SHOW_BACKGROUND_BIT) && (ppu->mask_register & SHOW_SPRITES_BIT)) {
                 ppu->v &= ~0x041F;
                 ppu->v |= ppu->t & 0x041F;
-            } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
+            } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & SHOW_BACKGROUND_BIT) && (ppu->mask_register & SHOW_SPRITES_BIT)) {
                 PPUBusScanlineIRQ(ppu->ppu_bus);
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {
                 // TODO: reset oam
@@ -175,15 +179,15 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
         case PRE_RENDER: 
             if (ppu->cycle == 1) {
                 ppu->status_register &= ~(SPRITE_ZERO_HIT_BIT | VERTICAL_BLANK_BIT);
-            } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 2)) && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
+            } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 2)) && (ppu->mask_register & SHOW_BACKGROUND_BIT) && (ppu->mask_register & SHOW_SPRITES_BIT)) {
                 ppu->v &= ~0x041F;
                 ppu->v |= ppu->t & 0x041F;
-            } else if (ppu->cycle >= 281 && ppu->cycle <= 305) {    // hard to get information on this but i think this should last 25 cycles and it starts at 281 because cycles and dots are offset by 1
+            } else if (ppu->cycle >= 281 && ppu->cycle <= 305 && (ppu->mask_register & SHOW_BACKGROUND_BIT) && (ppu->mask_register & SHOW_SPRITES_BIT)) {    // hard to get information on this but i think this should last 25 cycles and it starts at 281 because cycles and dots are offset by 1
                 ppu->v &= ~0x7BE0;
                 ppu->v |= ppu->t & 0x7BE0;
-            } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
+            } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & SHOW_BACKGROUND_BIT) && (ppu->mask_register & SHOW_SPRITES_BIT)) {
                 PPUBusScanlineIRQ(ppu->ppu_bus);
-            } else if (ppu->cycle == (SCANLINE_LAST_CYCLE - 1) && (ppu->is_odd_frame && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT)))) {
+            } else if (ppu->cycle == (SCANLINE_LAST_CYCLE - 1) && ppu->is_odd_frame && (ppu->mask_register & SHOW_BACKGROUND_BIT) && (ppu->mask_register & SHOW_SPRITES_BIT)) {
                 ppu->scanline++;
                 ppu->cycle = 0;
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {

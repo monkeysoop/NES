@@ -30,15 +30,15 @@ void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN
     switch (emulator->cartridge.tv_system) {
         case NTSC: 
             while (emulator->ppu.render_state != FINISHED) {
-                PPUClockNTSC(&emulator->ppu, pixels_buffer);
-                //PPUClockNTSC(&emulator->ppu, pixels_buffer);
-                //PPUClockNTSC(&emulator->ppu, pixels_buffer);
+                if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
+                    CPUNonMaskableInterrupt(&emulator->cpu);
+                }
                 
                 if (temp % 3 == 2) {
                     CPUClock(&emulator->cpu);
                     // apu
                 }
-
+            
                 temp++;
             }
             break;
@@ -60,5 +60,6 @@ void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN
             } 
             break;
     }
+
     emulator->ppu.render_state = PRE_RENDER;
 }
