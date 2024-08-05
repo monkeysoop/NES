@@ -159,7 +159,6 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
             break;
         case VERTICAL_BLANKING: 
             if (ppu->cycle == 1 && ppu->scanline == NTSC_POST_RENDER_SCANLINE_END) {
-                interrupt_cpu = true;
                 ppu->status_register |= VERTICAL_BLANK_BIT;
                 if (ppu->ctrl_register & GENERATE_NMI_BIT) {
                     interrupt_cpu = true;
