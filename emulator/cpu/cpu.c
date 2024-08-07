@@ -1,8 +1,8 @@
 #include "cpu.h"
 #include <string.h>
 
-
-
+#define NO_DECIMAL_ADC_SUPPORT
+#define DECIMAL_SBC_SUPPORT
 
 
 static inline uint8_t GetCarryFlag(struct CPU* cpu) {
@@ -494,28 +494,34 @@ static void ADC(struct CPU* cpu, const uint16_t absolute_address) {
     uint8_t temp = ReadByte(cpu, absolute_address);
     uint16_t res = (uint16_t)cpu->registers.a_register + (uint16_t)temp + (uint16_t)GetCarryFlagValue(cpu);
 
-    SetZeroFlagValue(cpu, (res & 0x00FF));
+    SetZeroFlagValue(cpu, !(res & 0x00FF));
 
+#ifdef NO_DECIMAL_ADC_SUPPORT
+    SetNegativeFlagValue(cpu, (res & 0x80));
+    SetOverflowFlagValue(cpu, (cpu->registers.a_register ^ (uint8_t)(res & 0x00FF)) & (temp ^ (uint8_t)(res & 0x00FF)) & 0x80);
+    SetCarryFlagValue(cpu, (res > 0x00FF));
+#else
     if (GetDecimalModeFlagValue(cpu)) {
         if (((cpu->registers.a_register & 0x0F) + (temp & 0x0F) + GetCarryFlagValue(cpu)) > 0x09) {
             res += 6;
         }
-
-        SetNegativeFlagValue(cpu, (res & 0x0080));
+    
+        SetNegativeFlagValue(cpu, (res & 0x80));
         SetOverflowFlagValue(cpu, (!((cpu->registers.a_register ^ temp) & 0x80) && ((cpu->registers.a_register ^ (uint8_t)res) & 0x80)));
         
         if (res > 0x0099) {
             res += 96;
         }
-
+    
         SetCarryFlagValue(cpu, (res > 0x0099));
-
+    
         cpu->remaining_cycles++;
     } else {
         SetNegativeFlagValue(cpu, (res & 0x80));
-        SetOverflowFlagValue(cpu, (!((cpu->registers.a_register ^ temp) & 0x80) && ((cpu->registers.a_register ^ (uint8_t)res) & 0x80)));
+        SetOverflowFlagValue(cpu, (cpu->registers.a_register ^ (uint8_t)(res & 0x00FF)) & (temp ^ (uint8_t)(res & 0x00FF)) & 0x80);
         SetCarryFlagValue(cpu, (res > 0x00FF));
     }
+#endif
 
     cpu->registers.a_register = (uint8_t)(res & 0x00FF);
     return;
@@ -717,8 +723,10 @@ static void SBC(struct CPU* cpu, const uint16_t absolute_address) {
 
     SetNegativeFlagValue(cpu, (res & 0x0080));
     SetZeroFlagValue(cpu, (!(res & 0x00FF)));
-    SetOverflowFlagValue(cpu, (((cpu->registers.a_register ^ temp) & 0x80) && ((cpu->registers.a_register ^ (uint8_t)res) & 0x80)));
+    SetOverflowFlagValue(cpu, (cpu->registers.a_register ^ (uint8_t)(res & 0x00FF)) & (~temp ^ (uint8_t)(res & 0x00FF)) & 0x80);
 
+#ifdef NO_DECIMAL_SBC_SUPPORT
+#else
     if (GetDecimalModeFlagValue(cpu)) {
         if (((cpu->registers.a_register & 0x0F) + GetCarryFlagValue(cpu) - 1) < (temp & 0x0F)) {
             res -= 6;
@@ -731,6 +739,7 @@ static void SBC(struct CPU* cpu, const uint16_t absolute_address) {
 
         cpu->remaining_cycles++;
     }
+#endif
 
     SetCarryFlagValue(cpu, (!(res & 0xFF00)));
     cpu->registers.a_register = (uint8_t)(res & 0x00FF);
@@ -1188,15 +1197,8 @@ uint8_t CPUDisassemble(
     char zero_page_row_buffer[ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH + 1];
 
     for (int y = 0; y < ZERO_PAGE_BYTE_BUFFER_HEIGHT; y++) {
-        for (int i = 0; i < (ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH + 1); i++) {
-            zero_page_row_buffer[i] = ' ';
-        } 
         for (int x = 0; x < ZERO_PAGE_BYTE_BUFFER_WIDTH; x++) {
             uint16_t temp_address = y * ZERO_PAGE_BYTE_BUFFER_WIDTH + x;
-            if (temp_address > 0x00FF) {
-                printf("indexing outside of zero page (possibly because incorrect buffer size/shape)\n");
-                exit(1);
-            }
             snprintf(&zero_page_row_buffer[x * ZERO_PAGE_BYTE_WIDTH], (ZERO_PAGE_BYTE_WIDTH + 1) * sizeof(char), "%02X ", ReadByte(cpu, temp_address));
         }
         memcpy(&zero_page_buffer[y], &zero_page_row_buffer[0], ZERO_PAGE_BYTE_BUFFER_WIDTH * ZERO_PAGE_BYTE_WIDTH * sizeof(char));
