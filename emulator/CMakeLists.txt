@@ -7,6 +7,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cpu_bus)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ppu)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ppu_bus)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cartridge)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/controller)
 
 
 add_library(${PROJECT_NAME} STATIC emulator.c)

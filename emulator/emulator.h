@@ -6,6 +6,7 @@
 #include "cpu_bus.h"
 #include "ppu.h"
 #include "ppu_bus.h"
+#include "controller.h"
 
 struct Emulator {
     struct Cartridge cartridge; 
@@ -13,6 +14,7 @@ struct Emulator {
     struct CPUBus cpu_bus; 
     struct PPU ppu; 
     struct PPUBus ppu_bus;
+    struct Controller controller;
 };
 
 
@@ -22,6 +24,9 @@ void EmulatorClean(struct Emulator* emulator);
 void EmulatorReset(struct Emulator* emulator);
 
 void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename);
+
+void EmulatorKeyDown(struct Emulator* emulator, enum Button button);
+void EmulatorKeyUp(struct Emulator* emulator, enum Button button);
 
 void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 

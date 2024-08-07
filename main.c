@@ -489,7 +489,7 @@ int main(int argc, char** argv)
 	int frame_counter = 0;
 
     bool debug_shown = false;
-    bool i_pressed = false;
+    bool paused = false;
 
     bool quit = false;
     while (!quit) {
@@ -504,34 +504,44 @@ int main(int argc, char** argv)
                     switch (ev.key.keysym.sym) {
                         case SDLK_ESCAPE: quit = true; break;
                         case SDLK_q: quit = true; break;
-                        case SDLK_SPACE: EmulatorRender(&emulator, main_window.pixels_buffer); break;
-                        case SDLK_f: for (int i = 0; i < 50000; i++) {EmulatorRender(&emulator, main_window.pixels_buffer); } break;
+                        case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
+                        // case SDLK_f: for (int i = 0; i < 200; i++) {EmulatorRender(&emulator, main_window.pixels_buffer); } break;
+                        case SDLK_w: EmulatorKeyDown(&emulator, UP); break;
+                        case SDLK_a: EmulatorKeyDown(&emulator, LEFT); break;
+                        case SDLK_s: EmulatorKeyDown(&emulator, DOWN); break;
+                        case SDLK_d: EmulatorKeyDown(&emulator, RIGHT); break;
+                        case SDLK_g: EmulatorKeyDown(&emulator, A); break;
+                        case SDLK_f: EmulatorKeyDown(&emulator, B); break;
+                        case SDLK_c: EmulatorKeyDown(&emulator, SELECT); break;
+                        case SDLK_v: EmulatorKeyDown(&emulator, START); break;
                         default: break;
                     }
-					//app.KeyboardDown(ev.key);
 					break;
 				case SDL_KEYUP:
 					switch (ev.key.keysym.sym) {
-                        case SDLK_i: i_pressed = true; break;
+                        case SDLK_i: 
+                            if (debug_shown) {
+                                SDL_HideWindow(debug_window.window);
+                            } else {
+                                SDL_ShowWindow(debug_window.window);
+                                SDL_RaiseWindow(debug_window.window);
+                            }
+                            debug_shown = !(debug_shown); 
+                            break;
+                        case SDLK_SPACE: paused = !(paused); break;
                         case SDLK_r: EmulatorReset(&emulator); break;
                         case SDLK_p: debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; break;
                         case SDLK_n: debug_window.layout.selected_nametable = (debug_window.layout.selected_nametable + 1) % 4; break;
-                        case SDLK_t: emulator.cpu.registers.program_counter = 0xC000; break;
+                        case SDLK_w: EmulatorKeyUp(&emulator, UP); break;
+                        case SDLK_a: EmulatorKeyUp(&emulator, LEFT); break;
+                        case SDLK_s: EmulatorKeyUp(&emulator, DOWN); break;
+                        case SDLK_d: EmulatorKeyUp(&emulator, RIGHT); break;
+                        case SDLK_g: EmulatorKeyUp(&emulator, A); break;
+                        case SDLK_f: EmulatorKeyUp(&emulator, B); break;
+                        case SDLK_c: EmulatorKeyUp(&emulator, SELECT); break;
+                        case SDLK_v: EmulatorKeyUp(&emulator, START); break;
                         default: break;
                     }
-                    //app.KeyboardUp(ev.key);
-					break;
-				case SDL_MOUSEBUTTONDOWN:
-					//app.MouseDown(ev.button);
-					break;
-				case SDL_MOUSEBUTTONUP:
-                    //app.MouseUp(ev.button);
-					break;
-				case SDL_MOUSEWHEEL:
-					//app.MouseWheel(ev.wheel);
-					break;
-				case SDL_MOUSEMOTION:
-					//app.MouseMove(ev.motion);
 					break;
 				case SDL_WINDOWEVENT:
                     if (ev.window.event == SDL_WINDOWEVENT_CLOSE) {
@@ -551,20 +561,13 @@ int main(int argc, char** argv)
 					//break;
 			}
 		}
-    
+
+        if (!paused) {
+            EmulatorRender(&emulator, main_window.pixels_buffer);
+        }
+
         MainRender(main_window);
         
-    
-        if (i_pressed) {
-            if (debug_shown) {
-                SDL_HideWindow(debug_window.window);
-            } else {
-                SDL_ShowWindow(debug_window.window);
-                SDL_RaiseWindow(debug_window.window);
-            }
-            debug_shown = !(debug_shown);
-            i_pressed = false;
-        }
     
         if (debug_shown) {
             uint16_t pc = emulator.cpu.registers.program_counter;

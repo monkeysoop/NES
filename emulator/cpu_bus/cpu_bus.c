@@ -4,7 +4,7 @@
 #include "cpu_bus.h"
 
 
-void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu) {
+void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu, struct Controller* controller) {
     memset(cpu_bus->cpu_ram, 0x00, CPU_RAM_SIZE * sizeof(uint8_t));
 
     cpu_bus->cpu_open_bus_data = 0x00;
@@ -12,6 +12,7 @@ void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU*
 
     cpu_bus->cartridge = cartridge;
     cpu_bus->ppu = ppu;
+    cpu_bus->controller = controller;
 }
 
 void CPUBusReset(struct CPUBus* cpu_bus) {
@@ -47,14 +48,19 @@ uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
     } else if (address < 0x4018) {
         // apu and io
         switch (address) {
-            case APU_CTRL: ; break;
-            case JOYSTICK_1_DATA: ; break;
-            case JOYSTICK_2_DATA: ; break;
+            case APU_CTRL:  
+                printf("apu and io registers not implemented\n"); 
+                break;
+            case JOYSTICK_1_DATA: 
+                cpu_bus->cpu_open_bus_data = 0x40;
+                cpu_bus->cpu_open_bus_data |= (ControllerRead1(cpu_bus->controller) & 0x1F); 
+                break;
+            case JOYSTICK_2_DATA: 
+                cpu_bus->cpu_open_bus_data = 0x40;
+                cpu_bus->cpu_open_bus_data |= (ControllerRead2(cpu_bus->controller) & 0x1F); 
+                break;
             default: printf("open bus read: 0x%04X\n", address); break;
         }
-
-        printf("apu and io registers not implemented\n"); 
-        exit(1);
     } else if (address < 0x4020) {
         // ignored
         printf("cpu test mode not implemented\n");
@@ -66,6 +72,7 @@ uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
 }
 
 void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
+    uint8_t previous_cpu_open_bus_data = cpu_bus->cpu_open_bus_data;
     cpu_bus->cpu_open_bus_data = data;
 
     if (address < 0x2000) {
@@ -127,7 +134,10 @@ void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t d
                 PPUWriteDMAAddress(cpu_bus->ppu, data);
                 break;
             case APU_CTRL: printf("apu not implemented\n"); exit(1); break;
-            case JOYSTICK_STROBE: printf("joystick not implemented\n"); exit(1); break; // TODO: open bus behavior
+            case JOYSTICK_STROBE: 
+                cpu_bus->cpu_open_bus_data = (previous_cpu_open_bus_data & 0xE0) | (data & 0x1F);
+                ControllerWrite(cpu_bus->controller, data);
+                break; // TODO: open bus behavior
             case APU_FRAME_COUNTER: printf("apu not implemented\n"); exit(1); break;    // TODO: open bus behavior
         }
     } else if (address < 0x4020) {

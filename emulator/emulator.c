@@ -5,7 +5,8 @@ void EmulatorInit(struct Emulator* emulator, const char* filename) {
     CartridgeInit(&emulator->cartridge, filename);
     PPUBusInit(&emulator->ppu_bus, &emulator->cartridge);
     PPUInit(&emulator->ppu, &emulator->ppu_bus, emulator->cartridge.tv_system);
-    CPUBusInit(&emulator->cpu_bus, &emulator->cartridge, &emulator->ppu);
+    ControllerInit(&emulator->controller);
+    CPUBusInit(&emulator->cpu_bus, &emulator->cartridge, &emulator->ppu, &emulator->controller);
     CPUInit(&emulator->cpu, &emulator->cpu_bus);
 }
 
@@ -19,10 +20,20 @@ void EmulatorReset(struct Emulator* emulator) {
     
     CPUBusReset(&emulator->cpu_bus);
     PPUBusReset(&emulator->ppu_bus);
+
+    ControllerReset(&emulator->controller);
 }
 
 void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename) {
 
+}
+
+void EmulatorKeyDown(struct Emulator* emulator, enum Button button) {
+    ControllerKeyDown1(&emulator->controller, button);
+}
+
+void EmulatorKeyUp(struct Emulator* emulator, enum Button button) {
+    ControllerKeyUp1(&emulator->controller, button);
 }
 
 void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {

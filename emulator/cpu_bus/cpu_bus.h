@@ -5,6 +5,7 @@
 
 #include "cartridge.h"
 #include "ppu.h"
+#include "controller.h"
 
 #define CPU_RAM_SIZE 0x0800  // 2KB
 
@@ -65,10 +66,10 @@ struct CPUBus {
 
     struct Cartridge* cartridge;
     struct PPU* ppu;
-    
+    struct Controller* controller;
 };
 
-void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu);
+void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu, struct Controller* controller);
 void CPUBusReset(struct CPUBus* cpu_bus);
 
 
