@@ -23,6 +23,7 @@ void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
     ppu->ppu_data_buffer = 0;
 
     memset(ppu->OAM, 0, 256 * sizeof(uint8_t));
+    memset(ppu->scanline_OAM_indecies, 0, 8 * sizeof(uint8_t));
 
     ppu->render_state = PRE_RENDER;
     ppu->scanline = (tv_system == NTSC) ? NTSC_VERTICAL_BLANKING_SCANLINE_END : PAL_VERTICAL_BLANKING_SCANLINE_END;
@@ -69,13 +70,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 uint8_t fine_x = (ppu->x + dot) & 0x07;
                 
                 uint8_t background_color_address = 0;
-                uint8_t background_opaque = 0;
-
-                uint8_t sprite_color_address = 0;
-                uint8_t sprite_opaque = 0;
-
-                uint8_t sprite_in_foreground = 0;
-
+                bool background_opaque = false;
 
                 if (ppu->mask_register & SHOW_BACKGROUND_BIT) {
                     if ((ppu->mask_register & SHOW_BACKGROUND_LEFTMOST_BIT) || dot >= 8) {
@@ -88,7 +83,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                         background_color_address = ((PPUBusRead(ppu->ppu_bus, pattern_address) >> (fine_x ^ 0x07)) & 0x01)
                                                  | (((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> (fine_x ^ 0x07)) & 0x01) << 1);
                         
-                        background_opaque = background_color_address;
+                        background_opaque = (bool)background_color_address;
 
                         uint16_t attribute_address = 0x23C0 | (ppu->v & 0x0C00) | ((ppu->v >> 4) & 0x0038) | ((ppu->v >> 2) & 0x0007);
                         background_color_address |= (((PPUBusRead(ppu->ppu_bus, attribute_address) >> (((ppu->v >> 4) & 0x04) | (ppu->v & 0x02))) & 0x03) << 2);
@@ -104,10 +99,67 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                     }
                 }
 
-                if ((ppu->mask_register & SHOW_SPRITES_BIT) && ((ppu->mask_register & SHOW_SPRITES_LEFTMOST_BIT) || dot >= 8)) {
-                    // TODO: render sprites
-                }
 
+                uint8_t sprite_color_address = 0;
+                bool sprite_opaque = false;
+
+                bool sprite_in_foreground = false;
+
+                if ((ppu->mask_register & SHOW_SPRITES_BIT) && ((ppu->mask_register & SHOW_SPRITES_LEFTMOST_BIT) || dot >= 8)) {
+                    int i = 0;
+                    do {
+                        uint8_t sprite_y =          ppu->OAM[ppu->scanline_OAM_indecies[i]];
+                        uint8_t sprite_index =      ppu->OAM[ppu->scanline_OAM_indecies[i] + 1];
+                        uint8_t sprite_attributes = ppu->OAM[ppu->scanline_OAM_indecies[i] + 2];
+                        uint8_t sprite_x =          ppu->OAM[ppu->scanline_OAM_indecies[i] + 3];
+
+                        uint8_t diff_x = dot - sprite_x;
+                        uint8_t diff_y = ppu->scanline - sprite_y;
+                        
+                        if (diff_x >= 0 && diff_x < 8) {
+                            uint8_t height = (ppu->ctrl_register & SPRITE_SIZE_BIT) ? 16 : 8;
+
+                            uint8_t shift_x = diff_x % 8;
+                            uint8_t shift_y = diff_y % height;
+
+                            if (!(sprite_attributes & FLIP_SPRITE_HORIZONTALLY_BIT)) {
+                                shift_x ^= 0x07;
+                            }
+                            if (sprite_attributes & FLIP_SPRITE_VERTICALLY_BIT) {
+                                shift_y ^= (height - 1);
+                            }
+
+                            uint16_t pattern_address;
+                            if (ppu->ctrl_register & SPRITE_SIZE_BIT) {
+                                pattern_address = ((uint16_t)(sprite_index & 0b11111110) << 4) + ((shift_y & 0x07) | ((shift_y & 0x08) << 1));
+                                pattern_address |= (sprite_index & 0b00000001) ? 0x1000 : 0;
+                            } else {
+                                pattern_address = ((uint16_t)sprite_index << 4) + shift_y + ((ppu->ctrl_register & SPRITE_PATTERN_TABLE_ADDRESS_BIT) ? 0x1000 : 0);
+                            }
+
+                            sprite_color_address = ((PPUBusRead(ppu->ppu_bus, pattern_address) >> shift_x) & 0x01)
+                                                 | (((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> shift_x) & 0x01) << 1);
+
+                            sprite_opaque = (bool)sprite_color_address;
+                            //if (sprite_color_address == 0) {
+                            //    continue;
+                            //}
+
+                            sprite_color_address |= 0x10;
+                            sprite_color_address |= (sprite_attributes & SPRITE_PALETTE_BITS) << 2;
+                        
+                            sprite_in_foreground = !((bool)(sprite_attributes & SPRITE_PRIORITY_BIT));
+                        }
+
+                        //break;
+                        i++;
+                    } while (i < 8 && !sprite_opaque);
+
+
+                    if (sprite_opaque && background_opaque && ppu->scanline_OAM_indecies[i] == 0) {
+                        ppu->status_register |= SPRITE_ZERO_HIT_BIT;
+                    }
+                }
 
                 uint8_t color_address = background_color_address;
                 if (!background_opaque && !sprite_opaque) {

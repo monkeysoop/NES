@@ -52,6 +52,13 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 #define VERTICAL_BLANK_BIT          0b10000000
 
 
+#define SPRITE_PALETTE_BITS          0b00000011
+#define SPRITE_UNUSED_BITS           0b00011100
+#define SPRITE_PRIORITY_BIT          0b00100000
+#define FLIP_SPRITE_HORIZONTALLY_BIT 0b01000000
+#define FLIP_SPRITE_VERTICALLY_BIT   0b10000000
+
+
 
 #define RENDER_SCANLINE_END 240
 
@@ -106,6 +113,7 @@ struct PPU {
     uint8_t ppu_data_buffer;
 
     uint8_t OAM[256];
+    uint8_t scanline_OAM_indecies[8]; 
 
     enum RenderState render_state;
     uint16_t scanline;
