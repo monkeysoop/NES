@@ -29,6 +29,7 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 #define NAMETABLE_BYTE_BUFFER_WIDTH 32
 #define NAMETABLE_BYTE_BUFFER_HEIGHT 32
 
+// ctrl register
 #define BASE_NAMETABLE_BITS                  0b00000011
 #define VRAM_ADDRESS_INCREMENT_BIT           0b00000100
 #define SPRITE_PATTERN_TABLE_ADDRESS_BIT     0b00001000
@@ -37,6 +38,7 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 #define MASTER_SLAVE_SELECT_BIT              0b01000000
 #define GENERATE_NMI_BIT                     0b10000000
 
+// mask register
 #define GREYSCALE_BIT                0b00000001
 #define SHOW_BACKGROUND_LEFTMOST_BIT 0b00000010
 #define SHOW_SPRITES_LEFTMOST_BIT    0b00000100
@@ -46,12 +48,13 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 #define TINT_GREEN_RED_ON_PAL_BIT    0b01000000
 #define TINT_BLUE_BIT                0b10000000
 
+// status register
 #define STALE_PPU_BUS_CONTENTS_BITS 0b00011111
 #define SPRITE_OVERFLOW_BIT         0b00100000
 #define SPRITE_ZERO_HIT_BIT         0b01000000
 #define VERTICAL_BLANK_BIT          0b10000000
 
-
+// sprite attributes
 #define SPRITE_PALETTE_BITS          0b00000011
 #define SPRITE_UNUSED_BITS           0b00011100
 #define SPRITE_PRIORITY_BIT          0b00100000
@@ -114,6 +117,7 @@ struct PPU {
 
     uint8_t OAM[256];
     uint8_t scanline_OAM_indecies[8]; 
+    uint8_t scanline_OAM_length;
 
     enum RenderState render_state;
     uint16_t scanline;
@@ -146,7 +150,6 @@ void PPUWriteOAMData(struct PPU* ppu, const uint8_t data);
 void PPUWriteScroll(struct PPU* ppu, const uint8_t data);
 void PPUWritePPUAddress(struct PPU* ppu, const uint8_t data);
 void PPUWritePPUData(struct PPU* ppu, const uint8_t data);
-void PPUWriteDMAAddress(struct PPU* ppu, const uint8_t data);
 
 uint8_t PPUReadStatus(struct PPU* ppu);
 uint8_t PPUReadOAMData(struct PPU* ppu);

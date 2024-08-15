@@ -24,6 +24,7 @@ void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
 
     memset(ppu->OAM, 0, 256 * sizeof(uint8_t));
     memset(ppu->scanline_OAM_indecies, 0, 8 * sizeof(uint8_t));
+    ppu->scanline_OAM_length = 0;
 
     ppu->render_state = PRE_RENDER;
     ppu->scanline = (tv_system == NTSC) ? NTSC_VERTICAL_BLANKING_SCANLINE_END : PAL_VERTICAL_BLANKING_SCANLINE_END;
@@ -49,7 +50,9 @@ void PPUReset(struct PPU* ppu, enum TVSystem tv_system) {
     ppu->ppu_data_buffer = 0;
 
     memset(ppu->OAM, 0, 256 * sizeof(uint8_t));
-
+    memset(ppu->scanline_OAM_indecies, 0, 8 * sizeof(uint8_t));
+    ppu->scanline_OAM_length = 0;
+    
     ppu->render_state = PRE_RENDER;
     ppu->scanline = (tv_system == NTSC) ? NTSC_VERTICAL_BLANKING_SCANLINE_END : PAL_VERTICAL_BLANKING_SCANLINE_END;
     ppu->cycle = 0;
@@ -107,16 +110,16 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 
                 if ((ppu->mask_register & SHOW_SPRITES_BIT) && ((ppu->mask_register & SHOW_SPRITES_LEFTMOST_BIT) || dot >= 8)) {
                     int i = 0;
-                    do {
-                        uint8_t sprite_y =          ppu->OAM[ppu->scanline_OAM_indecies[i]];
+                    while (i < ppu->scanline_OAM_length && !sprite_opaque) {
+                        uint8_t sprite_y =          ppu->OAM[ppu->scanline_OAM_indecies[i]    ];
                         uint8_t sprite_index =      ppu->OAM[ppu->scanline_OAM_indecies[i] + 1];
                         uint8_t sprite_attributes = ppu->OAM[ppu->scanline_OAM_indecies[i] + 2];
                         uint8_t sprite_x =          ppu->OAM[ppu->scanline_OAM_indecies[i] + 3];
 
-                        uint8_t diff_x = dot - sprite_x;
-                        uint8_t diff_y = ppu->scanline - sprite_y;
                         
-                        if (diff_x >= 0 && diff_x < 8) {
+                        if ((dot - sprite_x) >= 0 && (dot - sprite_x) < 8) {
+                            uint8_t diff_x = dot - sprite_x;
+                            uint8_t diff_y = ppu->scanline - sprite_y;
                             uint8_t height = (ppu->ctrl_register & SPRITE_SIZE_BIT) ? 16 : 8;
 
                             uint8_t shift_x = diff_x % 8;
@@ -153,7 +156,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 
                         //break;
                         i++;
-                    } while (i < 8 && !sprite_opaque);
+                    };
 
 
                     if (sprite_opaque && background_opaque && ppu->scanline_OAM_indecies[i] == 0) {
@@ -193,10 +196,25 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 ppu->v |= ppu->t & 0x041F;
             } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                 PPUBusScanlineIRQ(ppu->ppu_bus);
-            } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {
-                // TODO: reset oam
+            } else if (ppu->cycle == SCANLINE_LAST_CYCLE) { // checking if sprite rendering is enabled is unnecesseary because if it's disabled than the oam cache won't be read                
                 ppu->scanline++;
                 ppu->cycle = 0;
+
+
+                uint8_t height = (ppu->ctrl_register & SPRITE_SIZE_BIT) ? 16 : 8;
+                ppu->scanline_OAM_length = 0;
+
+                for (int oam_index = ppu->oam_address_register / 4; oam_index < 64; oam_index++) {
+                    uint8_t sprite_y = ppu->OAM[oam_index * 4];
+                    if (sprite_y <= ppu->scanline && ppu->scanline < (sprite_y + height)) {
+                        ppu->scanline_OAM_indecies[ppu->scanline_OAM_length] = oam_index * 4;
+                        ppu->scanline_OAM_length++;
+                        if (ppu->scanline_OAM_length == 8) {
+                            ppu->mask_register |= SPRITE_OVERFLOW_BIT;
+                            break;
+                        }
+                    }
+                }
             }
 
             if (ppu->scanline == RENDER_SCANLINE_END) {
@@ -386,10 +404,6 @@ void PPUWritePPUData(struct PPU* ppu, const uint8_t data) {
     ppu->v += ((ppu->ctrl_register & VRAM_ADDRESS_INCREMENT_BIT) ? 32 : 1);
 }
 
-void PPUWriteDMAAddress(struct PPU* ppu, const uint8_t data) {
-    printf("dma not implemented\n");
-    exit(1);
-}
 
 
 uint8_t PPUReadStatus(struct PPU* ppu) {
