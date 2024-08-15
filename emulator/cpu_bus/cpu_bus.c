@@ -71,7 +71,9 @@ uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
     return cpu_bus->cpu_open_bus_data;
 }
 
-void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
+bool CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data) {
+    bool dma_transfer_initiated = false;
+
     uint8_t previous_cpu_open_bus_data = cpu_bus->cpu_open_bus_data;
     cpu_bus->cpu_open_bus_data = data;
 
@@ -110,35 +112,35 @@ void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t d
         }
     } else if (address < 0x4018) {
         switch (address) {
-            case APU_PULSE_1_CTRL: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_1_SWEEP: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_1_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_1_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_2_CTRL: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_2_SWEEP: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_2_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_PULSE_2_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_TRIANGLE_CTRL: printf("apu not implemented\n"); exit(1); break;
-            case APU_TRIANGLE_UNUSED: printf("write to unused address"); exit(1); break;
-            case APU_TRIANGLE_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_TRIANGLE_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_NOISE_CTRL: printf("apu not implemented\n"); exit(1); break;
-            case APU_NOISE_UNUSED: printf("write to unused address"); exit(1); break;
-            case APU_NOISE_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_NOISE_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            case APU_DMC_CTRL: printf("apu not implemented\n"); exit(1); break;
-            case APU_DMC_DIRECT_LOAD: printf("apu not implemented\n"); exit(1); break;
-            case APU_DMC_ADDRESS: printf("apu not implemented\n"); exit(1); break;
-            case APU_DMC_LENGTH: printf("apu not implemented\n"); exit(1); break;
-            case PPU_DMA: ; 
-                PPUWriteDMAAddress(cpu_bus->ppu, data);
+            //case APU_PULSE_1_CTRL: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_1_SWEEP: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_1_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_1_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_2_CTRL: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_2_SWEEP: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_2_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_PULSE_2_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_TRIANGLE_CTRL: printf("apu not implemented\n"); exit(1); break;
+            //case APU_TRIANGLE_UNUSED: printf("write to unused address"); exit(1); break;
+            //case APU_TRIANGLE_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_TRIANGLE_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_NOISE_CTRL: printf("apu not implemented\n"); exit(1); break;
+            //case APU_NOISE_UNUSED: printf("write to unused address"); exit(1); break;
+            //case APU_NOISE_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_NOISE_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
+            //case APU_DMC_CTRL: printf("apu not implemented\n"); exit(1); break;
+            //case APU_DMC_DIRECT_LOAD: printf("apu not implemented\n"); exit(1); break;
+            //case APU_DMC_ADDRESS: printf("apu not implemented\n"); exit(1); break;
+            //case APU_DMC_LENGTH: printf("apu not implemented\n"); exit(1); break;
+            case PPU_DMA:
+                dma_transfer_initiated = true;
                 break;
-            case APU_CTRL: printf("apu not implemented\n"); exit(1); break;
+            //case APU_CTRL: printf("apu not implemented\n"); exit(1); break;
             case JOYSTICK_STROBE: 
                 cpu_bus->cpu_open_bus_data = (previous_cpu_open_bus_data & 0xE0) | (data & 0x1F);
                 ControllerWrite(cpu_bus->controller, data);
                 break; // TODO: open bus behavior
-            case APU_FRAME_COUNTER: printf("apu not implemented\n"); exit(1); break;    // TODO: open bus behavior
+            //case APU_FRAME_COUNTER: printf("apu not implemented\n"); exit(1); break;    // TODO: open bus behavior
         }
     } else if (address < 0x4020) {
         // ignored
@@ -147,4 +149,6 @@ void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t d
     } else {
         CartridgeWriteCPU(cpu_bus->cartridge, address, data);
     }
+
+    return dma_transfer_initiated;
 }

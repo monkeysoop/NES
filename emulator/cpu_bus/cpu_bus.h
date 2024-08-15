@@ -74,6 +74,6 @@ void CPUBusReset(struct CPUBus* cpu_bus);
 
 
 uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address);
-void CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data);
+bool CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t data);
 
 #endif

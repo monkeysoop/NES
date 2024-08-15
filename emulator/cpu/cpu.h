@@ -50,6 +50,12 @@ struct CPU {
     uint8_t remaining_cycles;
     uint64_t tick_counter;
 
+    bool dma_transfer;
+    bool dma_aligned;
+    uint16_t dma_address;
+    uint8_t oam_address;
+    uint8_t oam_data;
+
     struct Registers registers;
 
     struct CPUBus* cpu_bus;

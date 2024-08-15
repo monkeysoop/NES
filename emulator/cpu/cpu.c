@@ -2,7 +2,7 @@
 #include <string.h>
 
 #define NO_DECIMAL_ADC_SUPPORT
-#define DECIMAL_SBC_SUPPORT
+#define NO_DECIMAL_SBC_SUPPORT
 
 
 static inline uint8_t GetCarryFlag(struct CPU* cpu) {
@@ -107,7 +107,14 @@ static inline uint8_t ReadByte(struct CPU* cpu, const uint16_t address) {
     return CPUBusRead(cpu->cpu_bus, address);
 }
 static inline void WriteByte(struct CPU* cpu, const uint16_t address, const uint8_t data) {
-    CPUBusWrite(cpu->cpu_bus, address, data);
+    bool dma_transfer_initiated = CPUBusWrite(cpu->cpu_bus, address, data);
+    if (dma_transfer_initiated) {
+        cpu->dma_transfer = true;
+        cpu->dma_aligned = false;
+        cpu->dma_address = (data << 8);
+        cpu->oam_address = 0;
+        cpu->oam_data = 0;
+    }
 }
 
 static inline uint16_t ReadBigEndianWord(struct CPU* cpu, const uint16_t address_start) {
@@ -1081,6 +1088,12 @@ void CPUInit(struct CPU* cpu, struct CPUBus* cpu_bus) {
     cpu->remaining_cycles = 0;
     cpu->tick_counter = 0;
 
+    cpu->dma_transfer = false;
+    cpu->dma_aligned = false;
+    cpu->dma_address = 0;
+    cpu->oam_address = 0;
+    cpu->oam_data = 0;
+
     SetUnusedFlagValue(cpu, 1);
     SetIrgDisableFlagValue(cpu, 1);
 }
@@ -1095,6 +1108,12 @@ void CPUReset(struct CPU* cpu) {
     SetIrgDisableFlagValue(cpu, 1);
 
     cpu->remaining_cycles = 8;
+
+    cpu->dma_transfer = false;
+    cpu->dma_aligned = false;
+    cpu->dma_address = 0;
+    cpu->oam_address = 0;
+    cpu->oam_data = 0;
 }
 
 
@@ -1130,24 +1149,42 @@ void CPUNonMaskableInterrupt(struct CPU* cpu) {
 }
 
 void CPUClock(struct CPU* cpu) {
-    if (cpu->remaining_cycles == 0) {
-        uint8_t op_code = ReadByte(cpu, cpu->registers.program_counter);
-        cpu->registers.program_counter++;
-        
-        Instruction instruction = instructions[op_code];
-        
-        //printf("mnemonic: %s  -  opcode: 0x%02X  -  A: 0x%02X  -  X: 0x%02X  -  Y: 0x%02X  -  Status: 0x%02X  -  Stack pointer: 0x%02X  -  Program counter: 0x%04X  -  tick: %lu\n", 
-        //       instruction.mnemonic, op_code, cpu->registers.a_register, cpu->registers.x_register, cpu->registers.y_register, 
-        //       cpu->registers.status_flags, cpu->registers.stack_pointer, cpu->registers.program_counter, cpu->tick_counter - 1);
-        
-        cpu->remaining_cycles = instruction.cycles;
-        uint16_t absolute_address = instruction.address_mode(cpu);
-        
-        instruction.operator(cpu, absolute_address);
+    if (cpu->dma_transfer) {
+        if (cpu->dma_aligned) {
+            if (cpu->tick_counter % 2 == 0) {
+                cpu->oam_data = ReadByte(cpu, cpu->dma_address);
+                cpu->dma_address++;
+            } else {
+                cpu->cpu_bus->ppu->OAM[cpu->oam_address] = cpu->oam_data;
+                cpu->oam_address++;
+
+                if (cpu->oam_address == 0) {
+                    cpu->dma_transfer = false;
+                }
+            }
+        } else if (cpu->tick_counter % 2 == 1) {
+            cpu->dma_aligned = true;
+        }
+    } else {
+        if (cpu->remaining_cycles == 0) {
+            uint8_t op_code = ReadByte(cpu, cpu->registers.program_counter);
+            cpu->registers.program_counter++;
+
+            Instruction instruction = instructions[op_code];
+
+            //printf("mnemonic: %s  -  opcode: 0x%02X  -  A: 0x%02X  -  X: 0x%02X  -  Y: 0x%02X  -  Status: 0x%02X  -  Stack pointer: 0x%02X  -  Program counter: 0x%04X  -  tick: %lu\n", 
+            //       instruction.mnemonic, op_code, cpu->registers.a_register, cpu->registers.x_register, cpu->registers.y_register, 
+            //       cpu->registers.status_flags, cpu->registers.stack_pointer, cpu->registers.program_counter, cpu->tick_counter - 1);
+
+            cpu->remaining_cycles = instruction.cycles;
+            uint16_t absolute_address = instruction.address_mode(cpu);
+
+            instruction.operator(cpu, absolute_address);
+        }
+        cpu->remaining_cycles--;
     }
 
     cpu->tick_counter++;
-    cpu->remaining_cycles--;
 }
 
 
