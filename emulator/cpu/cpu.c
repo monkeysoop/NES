@@ -1156,6 +1156,7 @@ void CPUClock(struct CPU* cpu) {
                 cpu->dma_address++;
             } else {
                 cpu->cpu_bus->ppu->OAM[cpu->oam_address] = cpu->oam_data;
+                cpu->cpu_bus->cpu_open_bus_data = cpu->oam_data;
                 cpu->oam_address++;
 
                 if (cpu->oam_address == 0) {
