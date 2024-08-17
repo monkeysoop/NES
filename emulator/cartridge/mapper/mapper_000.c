@@ -41,7 +41,7 @@ uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address) {
             return cartridge->prg_ram[address & 0x0FFF];
         }
     } else {
-        return (cartridge->prg_rom[(address & 0x7FFF) & mapper_info->prg_rom_mask]);
+        return cartridge->prg_rom[address & mapper_info->prg_rom_mask];
     }
 }
 

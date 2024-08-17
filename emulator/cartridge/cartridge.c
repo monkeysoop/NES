@@ -127,6 +127,8 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
                 Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); break;
             case SxROM:
             case UxROM:
+                cartridge->mapper_info = malloc(sizeof(struct Mapper002Info));
+                Mapper002Init(cartridge, cartridge->prg_rom_16KB_units); break;
             case CNROM:
             case MMC3:
             case AxROM:
