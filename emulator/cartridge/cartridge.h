@@ -65,7 +65,7 @@ struct Cartridge {
 };
 
 struct Mapper000Info {
-    uint16_t cpu_address_mask;
+    uint16_t prg_rom_mask;
 };
 
 void CartridgeInit(struct Cartridge* cartridge, const char* filename);
