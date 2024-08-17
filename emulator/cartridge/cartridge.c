@@ -105,12 +105,15 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         }
 
         
+        cartridge->prg_rom_16KB_units = header.prg_rom_16KB_units;
+        cartridge->chr_rom_8KB_units= header.chr_rom_8KB_units;
+        cartridge->prg_ram_8KB_units = header.prg_ram_8KB_units;
 
-        if (header.chr_rom_8KB_units == 0) {
-            // 0 means that it's ram not rom and usually with size 8KB
-            printf("CHR RAM not supported\n");
-            fclose(cartridge_file);
-            exit(1);
+        if (header.chr_rom_8KB_units == 0) { // 0 means that it's ram not rom and usually with size 8KB
+            cartridge->supports_chr_ram = true;
+            cartridge->chr_rom_8KB_units = 1;
+        } else {
+            cartridge->supports_chr_ram = false;
         }
 
 
@@ -119,7 +122,7 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         cartridge->mapper_id = mapper_id;
 
         switch (mapper_id) {
-            case NROM: Mapper000Init(cartridge, header.prg_rom_16KB_units, header.prg_ram_8KB_units, header.chr_rom_8KB_units); break;
+            case NROM: Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); break;
             case SxROM:
             case UxROM:
             case CNROM:
@@ -139,13 +142,10 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
             fseek(cartridge_file, 512, SEEK_CUR);
         }
 
-        cartridge->prg_rom_16KB_units = header.prg_rom_16KB_units;
-        cartridge->chr_rom_8KB_units= header.chr_rom_8KB_units;
-        cartridge->prg_ram_8KB_units = header.prg_ram_8KB_units;
 
-        unsigned int prg_rom_size = header.prg_rom_16KB_units * 16 * 1024;
-        unsigned int chr_rom_size = header.chr_rom_8KB_units * 8 * 1024;
-        unsigned int prg_ram_size = header.prg_ram_8KB_units * 8 * 1024;
+        unsigned int prg_rom_size = cartridge->prg_rom_16KB_units * 16 * 1024;
+        unsigned int chr_rom_size = cartridge->chr_rom_8KB_units * 8 * 1024;
+        unsigned int prg_ram_size = cartridge->prg_ram_8KB_units * 8 * 1024;
 
         cartridge->prg_rom = malloc(prg_rom_size * sizeof(uint8_t));
         cartridge->chr_rom = malloc(chr_rom_size * sizeof(uint8_t));

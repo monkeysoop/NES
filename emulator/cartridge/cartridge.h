@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define NROM 0
 #define SxROM 1
@@ -44,6 +45,8 @@ struct Cartridge {
     uint8_t prg_ram_8KB_units;
     uint8_t chr_rom_8KB_units;
 
+    bool supports_chr_ram;
+
     uint8_t* prg_rom;
     uint8_t* prg_ram;
     uint8_t* chr_rom;
@@ -74,7 +77,7 @@ void CartridgeWriteCPU(struct Cartridge* cartridge, const uint16_t address, cons
 void CartridgeWritePPU(struct Cartridge* cartridge, const uint16_t address, const uint8_t value);
 
 
-void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
+void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units);
 void Mapper001Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
 void Mapper002Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
 void Mapper003Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
