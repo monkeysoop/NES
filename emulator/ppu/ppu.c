@@ -159,7 +159,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                     };
 
 
-                    if (sprite_opaque && background_opaque && ppu->scanline_OAM_indecies[i] == 0) {
+                    if (sprite_opaque && background_opaque && ppu->scanline_OAM_indecies[i - 1] == 0) {
                         ppu->status_register |= SPRITE_ZERO_HIT_BIT;
                     }
                 }
