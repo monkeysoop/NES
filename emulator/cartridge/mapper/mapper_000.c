@@ -10,10 +10,11 @@ void Mapper000WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 void Mapper000ScanlineIRQ(struct Cartridge* cartridge);
 
 void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units) {
+    struct Mapper000Info* mapper_info = (struct Mapper000Info*)cartridge->mapper_info;
     if (prg_rom_16KB_units == 1) {
-        cartridge->cpu_address_mask = 0x3FFF;
+        mapper_info->cpu_address_mask = 0x3FFF;
     } else if (prg_rom_16KB_units == 2) {
-        cartridge->cpu_address_mask = 0x7FFF;
+        mapper_info->cpu_address_mask = 0x7FFF;
     } else {
         printf("mapper 000 does not support more than 2 prg rom banks");
         exit(1);
@@ -28,6 +29,7 @@ void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units) {
 }
 
 uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address) {
+    struct Mapper000Info* mapper_info = (struct Mapper000Info*)cartridge->mapper_info;
     if (address < 0x6000) {
         printf("Attempted read from unmapped area\n");
         exit(1);
@@ -39,7 +41,7 @@ uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address) {
             return cartridge->prg_ram[address & 0x0FFF];
         }
     } else {
-        return (cartridge->prg_rom[(address & 0x7FFF) & cartridge->cpu_address_mask]);
+        return (cartridge->prg_rom[(address & 0x7FFF) & mapper_info->cpu_address_mask]);
     }
 }
 

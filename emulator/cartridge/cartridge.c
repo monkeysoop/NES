@@ -122,7 +122,9 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         cartridge->mapper_id = mapper_id;
 
         switch (mapper_id) {
-            case NROM: Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); break;
+            case NROM: 
+                cartridge->mapper_info = malloc(sizeof(struct Mapper000Info));
+                Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); break;
             case SxROM:
             case UxROM:
             case CNROM:
@@ -179,6 +181,7 @@ void CartridgeClean(struct Cartridge* cartridge) {
     if (cartridge->prg_ram_8KB_units != 0) {
         free(cartridge->prg_ram);
     }
+    free(cartridge->mapper_info);
 }
 
 void CartridgeScanlineIRQ(struct Cartridge* cartridge) {

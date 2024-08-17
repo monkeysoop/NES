@@ -51,8 +51,7 @@ struct Cartridge {
     uint8_t* prg_ram;
     uint8_t* chr_rom;
 
-    uint16_t cpu_address_mask;
-    uint16_t ppu_address_mask;
+    void* mapper_info;
 
     uint16_t mirroring_offsets[4];
 
@@ -63,6 +62,10 @@ struct Cartridge {
     void (*MapperWritePPU)(struct Cartridge*, uint16_t, uint8_t);
 
     void (*MapperScanlineIRQ)(struct Cartridge*);
+};
+
+struct Mapper000Info {
+    uint16_t cpu_address_mask;
 };
 
 void CartridgeInit(struct Cartridge* cartridge, const char* filename);
