@@ -11,8 +11,8 @@ void Mapper002ScanlineIRQ(struct Cartridge* cartridge);
 
 void Mapper002Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units) {
     struct Mapper002Info* mapper_info = (struct Mapper002Info*)cartridge->mapper_info;
-    mapper_info->prg_rom_bank_1_offset = 0x0000;
-    mapper_info->prg_rom_bank_2_offset = (prg_rom_16KB_units - 1) * 0x4000;
+    mapper_info->prg_rom_bank_1_offset = 0x00000000;
+    mapper_info->prg_rom_bank_2_offset = (prg_rom_16KB_units - 1) * 0x00004000;
 
     cartridge->MapperReadCPU = &Mapper002ReadCPU;
     cartridge->MapperReadPPU = &Mapper002ReadPPU;
@@ -38,7 +38,7 @@ uint8_t Mapper002ReadCPU(struct Cartridge* cartridge, uint16_t address) {
 }
 
 uint8_t Mapper002ReadPPU(struct Cartridge* cartridge, uint16_t address) {
-    return cartridge->chr_rom[address];
+    return cartridge->chr_rom[address & 0x1FFF];
 }
 
 
@@ -57,7 +57,7 @@ void Mapper002WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 
 void Mapper002WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     if (cartridge->supports_chr_ram) {
-        cartridge->chr_rom[address] = data;
+        cartridge->chr_rom[address & 0x1FFF] = data;
     } else {
         printf("Attempted write to chr rom\n");
         exit(1);

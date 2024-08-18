@@ -16,7 +16,7 @@ void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units) {
     } else if (prg_rom_16KB_units == 2) {
         mapper_info->prg_rom_mask = 0x7FFF;
     } else {
-        printf("mapper 000 does not support more than 2 prg rom banks");
+        printf("mapper 000 does not support more than 2 16KB prg rom banks");
         exit(1);
     }
 
@@ -46,7 +46,7 @@ uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address) {
 }
 
 uint8_t Mapper000ReadPPU(struct Cartridge* cartridge, uint16_t address) {
-    return cartridge->chr_rom[address];
+    return cartridge->chr_rom[address & 0x1FFF];
 }
 
 
@@ -56,7 +56,7 @@ void Mapper000WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
         exit(1);
     } else if (address < 0x8000) {
         if (cartridge->prg_ram_8KB_units == 0) {
-            printf("Attempted write to prg ram that hase size 0\n");
+            printf("Attempted write to prg ram that has size 0\n");
             exit(1);
         } else {
             cartridge->prg_ram[address & 0x0FFF] = data;
@@ -69,7 +69,7 @@ void Mapper000WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 
 void Mapper000WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     if (cartridge->supports_chr_ram) {
-        cartridge->chr_rom[address] = data;
+        cartridge->chr_rom[address & 0x1FFF] = data;
     } else {
         printf("Attempted write to chr rom\n");
         exit(1);
