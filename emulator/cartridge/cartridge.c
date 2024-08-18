@@ -124,12 +124,20 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         switch (mapper_id) {
             case NROM: 
                 cartridge->mapper_info = malloc(sizeof(struct Mapper000Info));
-                Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); break;
+                Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); 
+                break;
             case SxROM:
+                printf("Mapper not supported  id: %d\n", mapper_id); 
+                fclose(cartridge_file); 
+                exit(1);
             case UxROM:
                 cartridge->mapper_info = malloc(sizeof(struct Mapper002Info));
-                Mapper002Init(cartridge, cartridge->prg_rom_16KB_units); break;
+                Mapper002Init(cartridge, cartridge->prg_rom_16KB_units); 
+                break;
             case CNROM:
+                cartridge->mapper_info = malloc(sizeof(struct Mapper003Info));
+                Mapper003Init(cartridge, cartridge->prg_rom_16KB_units); 
+                break;
             case MMC3:
             case AxROM:
             case ColorDreams:
