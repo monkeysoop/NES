@@ -32,6 +32,8 @@ void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
 
     ppu->is_odd_frame = 0;
 
+    ppu->sprite_0_hit_happened = false;
+
     ppu->ppu_bus = ppu_bus;
 }
 
@@ -58,6 +60,8 @@ void PPUReset(struct PPU* ppu, enum TVSystem tv_system) {
     ppu->cycle = 0;
 
     ppu->is_odd_frame = 0;
+ 
+    ppu->sprite_0_hit_happened = false;
 }
 
 
@@ -109,21 +113,19 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 bool sprite_in_foreground = false;
 
                 if ((ppu->mask_register & SHOW_SPRITES_BIT) && ((ppu->mask_register & SHOW_SPRITES_LEFTMOST_BIT) || dot >= 8)) {
+                    uint8_t height = (ppu->ctrl_register & SPRITE_SIZE_BIT) ? 16 : 8;
                     int i = 0;
-                    while (i < ppu->scanline_OAM_length && !sprite_opaque) {
-                        uint8_t sprite_y =          ppu->OAM[ppu->scanline_OAM_indecies[i]    ];
+                    while (!sprite_opaque && i < ppu->scanline_OAM_length) {
+                        uint8_t sprite_y =          ppu->OAM[ppu->scanline_OAM_indecies[i]    ] + 1;
                         uint8_t sprite_index =      ppu->OAM[ppu->scanline_OAM_indecies[i] + 1];
                         uint8_t sprite_attributes = ppu->OAM[ppu->scanline_OAM_indecies[i] + 2];
                         uint8_t sprite_x =          ppu->OAM[ppu->scanline_OAM_indecies[i] + 3];
 
                         
-                        if ((dot - sprite_x) >= 0 && (dot - sprite_x) < 8) {
-                            uint8_t diff_x = dot - sprite_x;
-                            uint8_t diff_y = ppu->scanline - sprite_y;
-                            uint8_t height = (ppu->ctrl_register & SPRITE_SIZE_BIT) ? 16 : 8;
-
-                            uint8_t shift_x = diff_x % 8;
-                            uint8_t shift_y = diff_y % height;
+                        if ((int)(dot - sprite_x) >= 0 && (int)(dot - sprite_x) < 8) {
+                            // note subtracting 2 unsigned numbers in both x and y case will result in positive numbers because of prior checks assuring it 
+                            uint8_t shift_x = (dot - sprite_x) % 8;
+                            uint8_t shift_y = (ppu->scanline - sprite_y) % height;
 
                             if (!(sprite_attributes & FLIP_SPRITE_HORIZONTALLY_BIT)) {
                                 shift_x ^= 0x07;
@@ -134,9 +136,11 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 
                             uint16_t pattern_address;
                             if (ppu->ctrl_register & SPRITE_SIZE_BIT) {
+                                // 16 pixel tall tiles
                                 pattern_address = ((uint16_t)(sprite_index & 0b11111110) << 4) + ((shift_y & 0x07) | ((shift_y & 0x08) << 1));
                                 pattern_address |= (sprite_index & 0b00000001) ? 0x1000 : 0;
                             } else {
+                                // 8 pixel tall tiles
                                 pattern_address = ((uint16_t)sprite_index << 4) + shift_y + ((ppu->ctrl_register & SPRITE_PATTERN_TABLE_ADDRESS_BIT) ? 0x1000 : 0);
                             }
 
@@ -144,9 +148,6 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                                                  | (((PPUBusRead(ppu->ppu_bus, (pattern_address + 8)) >> shift_x) & 0x01) << 1);
 
                             sprite_opaque = (bool)sprite_color_address;
-                            //if (sprite_color_address == 0) {
-                            //    continue;
-                            //}
 
                             sprite_color_address |= 0x10;
                             sprite_color_address |= (sprite_attributes & SPRITE_PALETTE_BITS) << 2;
@@ -154,13 +155,13 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                             sprite_in_foreground = !((bool)(sprite_attributes & SPRITE_PRIORITY_BIT));
                         }
 
-                        //break;
                         i++;
                     };
 
 
-                    if (sprite_opaque && background_opaque && ppu->scanline_OAM_indecies[i - 1] == 0) {
+                    if (sprite_opaque && background_opaque && ppu->scanline_OAM_indecies[i - 1] == 0 && dot != 255 && !ppu->sprite_0_hit_happened) {
                         ppu->status_register |= SPRITE_ZERO_HIT_BIT;
+                        ppu->sprite_0_hit_happened = true;
                     }
                 }
 
@@ -206,11 +207,14 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 
                 for (int oam_index = ppu->oam_address_register / 4; oam_index < 64; oam_index++) {
                     uint8_t sprite_y = ppu->OAM[oam_index * 4];
-                    if (sprite_y <= ppu->scanline && ppu->scanline < (sprite_y + height)) {
-                        ppu->scanline_OAM_indecies[ppu->scanline_OAM_length] = oam_index * 4;
-                        ppu->scanline_OAM_length++;
-                        if (ppu->scanline_OAM_length == 8) {
-                            ppu->mask_register |= SPRITE_OVERFLOW_BIT;
+                    if (sprite_y <= (ppu->scanline - 1) && (ppu->scanline - 1) < (sprite_y + height)) {     // note that scanline has already been incremented but the way sprite y is implemented it needs to be offset one less
+                        if (ppu->scanline_OAM_length < 8) {
+                            ppu->scanline_OAM_indecies[ppu->scanline_OAM_length] = oam_index * 4;
+                            ppu->scanline_OAM_length++;
+                        } else {
+                            if (ppu->scanline < RENDER_SCANLINE_END && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
+                                ppu->status_register |= SPRITE_OVERFLOW_BIT;
+                            }
                             break;
                         }
                     }
@@ -218,6 +222,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
             }
 
             if (ppu->scanline == RENDER_SCANLINE_END) {
+                ppu->scanline_OAM_length = 0;
                 ppu->render_state = POST_RENDER;
             }
             break;
@@ -248,7 +253,8 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
             break;
         case PRE_RENDER: 
             if (ppu->cycle == 1) {
-                ppu->status_register &= ~(SPRITE_ZERO_HIT_BIT | VERTICAL_BLANK_BIT);
+                ppu->status_register &= ~(SPRITE_ZERO_HIT_BIT | VERTICAL_BLANK_BIT | SPRITE_OVERFLOW_BIT);
+                ppu->sprite_0_hit_happened = false;
             } else if ((ppu->cycle == (SCANLINE_VISIBLE_DOTS + 2)) && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                 ppu->v &= ~0x041F;
                 ppu->v |= ppu->t & 0x041F;

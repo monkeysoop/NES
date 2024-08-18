@@ -124,6 +124,8 @@ struct PPU {
     uint16_t cycle;
 
     uint8_t is_odd_frame;
+    
+    bool sprite_0_hit_happened; 
 
     struct PPUBus* ppu_bus;
 };
