@@ -1,4 +1,5 @@
 #include "emulator.h"
+#include "logger.h"
 
 
 void EmulatorInit(struct Emulator* emulator, const char* filename) {
@@ -71,6 +72,5 @@ void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN
             } 
             break;
     }
-
     emulator->ppu.render_state = PRE_RENDER;
 }

@@ -1,8 +1,8 @@
-#include <stdio.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "ppu.h"
-
+#include "logger.h"
 
 
 void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system) {
@@ -278,8 +278,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
             }
             break;
         case FINISHED: 
-            printf("ppu shouldn't be clocked when it's state is set to FINISHED\n");
-            exit(1);
+            LOG(ERROR, PPU, "ppu shouldn't be clocked when it's state is set to FINISHED\n");
             break;
     }
     ppu->cycle++;
@@ -288,8 +287,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
 }
 
 bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
-    printf("PAL not implemented\n");
-    exit(1);
+    LOG(ERROR, PPU, "PAL not implemented\n");
 }
 
 
@@ -332,15 +330,14 @@ void DebugView(
     }
 
 
-    uint16_t address_offset;
+    uint16_t address_offset = 0;
     switch (selected_nametable) {
         case 0: address_offset = 0x2000; break;
         case 1: address_offset = 0x2400; break;
         case 2: address_offset = 0x2800; break;
         case 3: address_offset = 0x2C00; break;
         default:
-            printf("select a nametable 0: 0x2000  1: 0x2400  2: 0x2800 3: 0x2C00\n");
-            exit(1);
+            LOG(ERROR, PPU, "select a nametable 0: 0x2000  1: 0x2400  2: 0x2800 3: 0x2C00\n");
     }
 
     char name_table_row_buffer[NAMETABLE_BYTE_BUFFER_WIDTH * NAMETABLE_BYTE_WIDTH + 1];

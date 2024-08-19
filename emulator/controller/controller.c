@@ -1,4 +1,5 @@
 #include "controller.h"
+#include "logger.h"
 
 
 void ControllerInit(struct Controller* controller) {
@@ -39,7 +40,7 @@ void ControllerKeyUp2(struct Controller* controller, enum Button button) {
 
 
 uint8_t ControllerRead1(struct Controller* controller) {
-    uint8_t res;
+    uint8_t res = 0x00;
     switch (controller->strobe) {
         case 0: 
             res = controller->status_1 & 0x01;
@@ -54,7 +55,7 @@ uint8_t ControllerRead1(struct Controller* controller) {
 }
 
 uint8_t ControllerRead2(struct Controller* controller) {
-    uint8_t res;
+    uint8_t res = 0x00;
     switch (controller->strobe) {
         case 0: 
             res = controller->status_2 & 0x01;

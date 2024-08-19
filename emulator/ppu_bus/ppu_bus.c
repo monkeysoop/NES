@@ -1,6 +1,8 @@
 #include "ppu_bus.h"
 #include <stdio.h>
 
+#include "logger.h"
+
 void PPUBusInit(struct PPUBus* ppu_bus, struct Cartridge* cartridge) {
     ppu_bus->cartridge = cartridge;
     memset(ppu_bus->palette, 0x00, PALETTE_RAM_SIZE * sizeof(uint8_t));
@@ -30,8 +32,7 @@ uint8_t PPUBusRead(struct PPUBus* ppu_bus, const uint16_t address) {
         return ppu_bus->palette[(address & 0x1F)];
     
     } else {
-        printf("Invalid address\n");
-        exit(1);
+        LOG(ERROR, PPU_BUS, "Invalid address read 0x%04X\n", address);
     }
 }
 
@@ -52,7 +53,6 @@ void PPUBusWrite(struct PPUBus* ppu_bus, const uint16_t address, const uint8_t d
         }    
 
     } else {
-        printf("Invalid address\n");
-        exit(1);
+        LOG(ERROR, PPU_BUS, "Invalid address written 0x%04X\n", address);
     }
 }

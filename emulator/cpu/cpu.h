@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <sys/stat.h>
 
 #include "cpu_bus.h"

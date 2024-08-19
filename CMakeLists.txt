@@ -4,7 +4,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 
-add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-value)
+add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-value -O3)
 
 
 add_custom_target(copy-font-png ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/font.png)
@@ -17,6 +17,7 @@ add_custom_command(
 
 
 add_subdirectory(emulator)
+add_subdirectory(logger)
 
 
 add_executable(${PROJECT_NAME} main.c)
@@ -45,3 +46,4 @@ include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_IMAGE_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} PRIVATE EMULATOR)
+target_link_libraries(${PROJECT_NAME} PRIVATE LOGGER)

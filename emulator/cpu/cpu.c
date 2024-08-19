@@ -1,5 +1,9 @@
-#include "cpu.h"
 #include <string.h>
+#include <stdio.h>
+
+#include "cpu.h"
+#include "logger.h"
+
 
 #define NO_DECIMAL_ADC_SUPPORT
 #define NO_DECIMAL_SBC_SUPPORT
@@ -166,8 +170,7 @@ static inline void StackPushLittleEndianWord(struct CPU* cpu, uint16_t data) {
 
 
 static uint16_t IlligalMode(struct CPU* cpu) {
-    printf("illigal addressing mode\n");
-    exit(1);
+    LOG(ERROR, CPU, "illigal addressing mode");
     return 0;
 }
 static uint16_t Accumulator(struct CPU* cpu) {
@@ -279,8 +282,7 @@ static uint16_t IndirectY(struct CPU* cpu) {
 
 
 static void ILL(struct CPU* cpu, const uint16_t absolute_address) {
-    printf("illigal opcode\n");
-    exit(1);
+    LOG(ERROR, CPU, "illigal opcode");
     return;
 }
 
@@ -1173,10 +1175,6 @@ void CPUClock(struct CPU* cpu) {
 
             Instruction instruction = instructions[op_code];
 
-            //printf("mnemonic: %s  -  opcode: 0x%02X  -  A: 0x%02X  -  X: 0x%02X  -  Y: 0x%02X  -  Status: 0x%02X  -  Stack pointer: 0x%02X  -  Program counter: 0x%04X  -  tick: %lu\n", 
-            //       instruction.mnemonic, op_code, cpu->registers.a_register, cpu->registers.x_register, cpu->registers.y_register, 
-            //       cpu->registers.status_flags, cpu->registers.stack_pointer, cpu->registers.program_counter, cpu->tick_counter - 1);
-
             cpu->remaining_cycles = instruction.cycles;
             uint16_t absolute_address = instruction.address_mode(cpu);
 
@@ -1493,8 +1491,7 @@ uint8_t CPUDisassemble(
                 }
             }
             else {
-                printf("unknown addressing mode\n");
-                exit(1);
+                LOG(ERROR, CPU, "unknown addressing mode\n");
             }
         } else { 
             if ((x + 16) < (DISASSEMBLY_BUFFER_WIDTH + 1)) {
@@ -1505,8 +1502,7 @@ uint8_t CPUDisassemble(
     
         if (x >= DISASSEMBLY_BUFFER_WIDTH) {
             // this means something didn't fit
-            printf("disassembly character buffer too thin\n");
-            exit(1);
+            LOG(ERROR, CPU, "disassembly character buffer too thin\n");
         }
         
         disassembly_row_buffer[x] = ' ';    // removes null terminator at the end

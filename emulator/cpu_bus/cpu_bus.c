@@ -1,7 +1,7 @@
-#include <stdio.h>
 #include <string.h>
 
 #include "cpu_bus.h"
+#include "logger.h"
 
 
 void CPUBusInit(struct CPUBus* cpu_bus, struct Cartridge* cartridge, struct PPU* ppu, struct Controller* controller) {
@@ -29,18 +29,18 @@ uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
     } else if (address < 0x4000) {
         // ppu io registers
         switch (address & 0x2007) {
-            case PPU_CTRL: printf("open bus read: 0x%04X\n", address); break;
-            case PPU_MASK: printf("open bus read: 0x%04X\n", address); break;
+            case PPU_CTRL: LOG(WARNING, CPU_BUS, "open bus read: 0x%04X\n", address); break;
+            case PPU_MASK: LOG(WARNING, CPU_BUS, "open bus read: 0x%04X\n", address); break;
             case PPU_STATUS: 
                 cpu_bus->ppu_io_open_bus_data &= STALE_PPU_BUS_CONTENTS_BITS;
                 cpu_bus->ppu_io_open_bus_data |= (PPUReadStatus(cpu_bus->ppu) & (SPRITE_OVERFLOW_BIT | SPRITE_ZERO_HIT_BIT | VERTICAL_BLANK_BIT)); 
                 break;
-            case OAM_ADDRESS: printf("open bus read: 0x%04X\n", address); break;
+            case OAM_ADDRESS: LOG(WARNING, CPU_BUS, "open bus read: 0x%04X\n", address); break;
             case OAM_DATA: 
                 cpu_bus->ppu_io_open_bus_data = PPUReadOAMData(cpu_bus->ppu); 
                 break;
-            case PPU_SCROLL: printf("open bus read: 0x%04X\n", address); break;
-            case PPU_ADDRESS: printf("open bus read: 0x%04X\n", address); break;
+            case PPU_SCROLL: LOG(WARNING, CPU_BUS, "open bus read: 0x%04X\n", address); break;
+            case PPU_ADDRESS: LOG(WARNING, CPU_BUS, "open bus read: 0x%04X\n", address); break;
             case PPU_DATA: 
                 cpu_bus->ppu_io_open_bus_data = PPUReadPPUData(cpu_bus->ppu); break;
         }
@@ -49,7 +49,7 @@ uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
         // apu and io
         switch (address) {
             case APU_CTRL:  
-                printf("apu and io registers not implemented\n"); 
+                LOG(WARNING, CPU_BUS, "apu and io registers not implemented\n"); 
                 break;
             case JOYSTICK_1_DATA: 
                 cpu_bus->cpu_open_bus_data = 0x40;
@@ -59,12 +59,11 @@ uint8_t CPUBusRead(struct CPUBus* cpu_bus, const uint16_t address) {
                 cpu_bus->cpu_open_bus_data = 0x40;
                 cpu_bus->cpu_open_bus_data |= (ControllerRead2(cpu_bus->controller) & 0x1F); 
                 break;
-            default: printf("open bus read: 0x%04X\n", address); break;
+            default: LOG(WARNING, CPU_BUS, "open bus read: 0x%04X\n", address); break;
         }
     } else if (address < 0x4020) {
         // ignored
-        printf("cpu test mode not implemented\n");
-        exit(1);
+        LOG(ERROR, CPU_BUS, "cpu test mode not implemented\n");
     } else {
         cpu_bus->cpu_open_bus_data = CartridgeReadCPU(cpu_bus->cartridge, address);
     }
@@ -90,7 +89,7 @@ bool CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t d
                 PPUWriteMask(cpu_bus->ppu, data);
                 break;
             case PPU_STATUS: 
-                printf("open bus write: 0x%04X\n", address);
+                LOG(DEBUG_INFO, CPU_BUS, "open bus write: 0x%04X\n", address);
                 break;
             case OAM_ADDRESS: 
                 PPUWriteOAMAddress(cpu_bus->ppu, data);
@@ -112,40 +111,39 @@ bool CPUBusWrite(struct CPUBus* cpu_bus, const uint16_t address, const uint8_t d
         }
     } else if (address < 0x4018) {
         switch (address) {
-            //case APU_PULSE_1_CTRL: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_1_SWEEP: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_1_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_1_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_2_CTRL: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_2_SWEEP: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_2_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_PULSE_2_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_TRIANGLE_CTRL: printf("apu not implemented\n"); exit(1); break;
-            //case APU_TRIANGLE_UNUSED: printf("write to unused address"); exit(1); break;
-            //case APU_TRIANGLE_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_TRIANGLE_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_NOISE_CTRL: printf("apu not implemented\n"); exit(1); break;
-            //case APU_NOISE_UNUSED: printf("write to unused address"); exit(1); break;
-            //case APU_NOISE_LOW_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_NOISE_HIGH_BYTE: printf("apu not implemented\n"); exit(1); break;
-            //case APU_DMC_CTRL: printf("apu not implemented\n"); exit(1); break;
-            //case APU_DMC_DIRECT_LOAD: printf("apu not implemented\n"); exit(1); break;
-            //case APU_DMC_ADDRESS: printf("apu not implemented\n"); exit(1); break;
-            //case APU_DMC_LENGTH: printf("apu not implemented\n"); exit(1); break;
+            case APU_PULSE_1_CTRL: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_1_SWEEP: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_1_LOW_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_1_HIGH_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_2_CTRL: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_2_SWEEP: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_2_LOW_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_PULSE_2_HIGH_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_TRIANGLE_CTRL: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_TRIANGLE_UNUSED: LOG(WARNING, CPU_BUS, "write to unused address"); break;
+            case APU_TRIANGLE_LOW_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_TRIANGLE_HIGH_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_NOISE_CTRL: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_NOISE_UNUSED: LOG(WARNING, CPU_BUS, "write to unused address"); break;
+            case APU_NOISE_LOW_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_NOISE_HIGH_BYTE: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_DMC_CTRL: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_DMC_DIRECT_LOAD: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_DMC_ADDRESS: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
+            case APU_DMC_LENGTH: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
             case PPU_DMA:
                 dma_transfer_initiated = true;
                 break;
-            //case APU_CTRL: printf("apu not implemented\n"); exit(1); break;
+            case APU_CTRL: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;
             case JOYSTICK_STROBE: 
                 cpu_bus->cpu_open_bus_data = (previous_cpu_open_bus_data & 0xE0) | (data & 0x1F);
                 ControllerWrite(cpu_bus->controller, data);
-                break; // TODO: open bus behavior
-            //case APU_FRAME_COUNTER: printf("apu not implemented\n"); exit(1); break;    // TODO: open bus behavior
+                break;
+            case APU_FRAME_COUNTER: LOG(WARNING, CPU_BUS, "apu not implemented\n"); break;    // TODO: open bus behavior
         }
     } else if (address < 0x4020) {
         // ignored
-        printf("cpu test mode not implemented\n");
-        exit(1);
+        LOG(ERROR, CPU_BUS, "cpu test mode not implemented\n");
     } else {
         CartridgeWriteCPU(cpu_bus->cartridge, address, data);
     }
