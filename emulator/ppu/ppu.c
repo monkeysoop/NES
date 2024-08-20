@@ -168,7 +168,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 uint8_t color_address = background_color_address;
                 if (!background_opaque && !sprite_opaque) {
                     color_address = 0;
-                    if ((ppu->v & 0x3F00) == 0x3F00) {
+                    if ((ppu->v & 0x3F00) == 0x3F00 && !(ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                         color_address = ppu->v & 0x1F;
                     }
                 } else if (sprite_opaque && (!background_opaque || sprite_in_foreground)) {
@@ -381,8 +381,8 @@ void PPUWriteScroll(struct PPU* ppu, const uint8_t data) {
     } else {
         // 1. write
         ppu->t &= 0b1111111111100000;
-        ppu->t |= (data >> 3);
-        ppu->x = data & 0b0000000000000111;
+        ppu->t |= ((data & 0b11111000) >> 3);
+        ppu->x = data & 0b00000111;
         ppu->w = 1;
     }
 }
