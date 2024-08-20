@@ -1,7 +1,10 @@
-#include "cartridge.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "cartridge.h"
+#include "logger.h"
+
 
 union Header {
     struct {
@@ -40,29 +43,25 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
     FILE* cartridge_file = fopen(filename, "r");
     
     if (cartridge_file == NULL) {
-        printf("Failed to open file\n");
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "Failed to open file\n");
     }
 
     union Header header;
     size_t ret = fread(&header, sizeof(union Header), 1, cartridge_file);
     if (ret != 1) {
-        printf("Failed to read header\n");
         fclose(cartridge_file);
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "Failed to read header\n");
     }
 
     if (header.name[0] != 0x4e || header.name[1] != 0x45 || header.name[2] != 0x53 || header.name[3] != 0x1a) {
-        printf("Incorrect file format\n");
         fclose(cartridge_file);
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "Incorrect file format\n");
     }
 
     
     if (header.alternative_layout == 1) {
-        printf("alternative layout not supported\n");
         fclose(cartridge_file);
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "alternative layout not supported\n");
     }
 
 
@@ -78,35 +77,31 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         cartridge->format = iNES;
     } else {
         // iNES 0.7 or archaic iNES
-        printf("format not supported(implemented)\n");
         fclose(cartridge_file);
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "format not supported(implemented)\n");
     }
 
 
     if (cartridge->format == NES_2) {
-        printf("NES 2.0 (rom format) not supported\n");
         fclose(cartridge_file);
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "NES 2.0 (rom format) not supported\n");
     } else if (cartridge->format == ARCHAIC_iNES) {
-        printf("Archaic iNES (rom format) not supported\n");
         fclose(cartridge_file);
-        exit(1);
+        LOG(ERROR, CARTRIDGE, "Archaic iNES (rom format) not supported\n");
     } else if (cartridge->format == iNES) {
 
 
         if (header.TV_system == 1) {
             cartridge->tv_system = PAL;
-            printf("PAL TV system not supported\n");
             fclose(cartridge_file);
-            exit(1);
+            LOG(ERROR, CARTRIDGE, "PAL TV system not supported\n");
         } else {
             cartridge->tv_system = NTSC;
         }
 
         
         cartridge->prg_rom_16KB_units = header.prg_rom_16KB_units;
-        cartridge->chr_rom_8KB_units= header.chr_rom_8KB_units;
+        cartridge->chr_rom_8KB_units = header.chr_rom_8KB_units;
         cartridge->prg_ram_8KB_units = header.prg_ram_8KB_units;
 
         if (header.chr_rom_8KB_units == 0) { // 0 means that it's ram not rom and usually with size 8KB
@@ -116,36 +111,42 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
             cartridge->supports_chr_ram = false;
         }
 
+        if (header.prg_ram_8KB_units == 0) {
+            cartridge->prg_ram_8KB_units = 1;
+        }
+
 
         uint8_t mapper_id = header.mapper_id_bits_0123 | (header.mapper_id_bits_4567 << 4);
+
+        LOG(DEBUG_INFO, CARTRIDGE, "mapper id: %d\n", mapper_id);
+        LOG(DEBUG_INFO, CARTRIDGE, "prg rom size: %d * 16KB\nchr rom size: %d * 8KB\nprg ram size: %d * 8KB\n", cartridge->prg_rom_16KB_units, cartridge->chr_rom_8KB_units, cartridge->prg_ram_8KB_units);
 
         cartridge->mapper_id = mapper_id;
 
         switch (mapper_id) {
             case NROM: 
                 cartridge->mapper_info = malloc(sizeof(struct Mapper000Info));
-                Mapper000Init(cartridge, cartridge->prg_rom_16KB_units); 
+                Mapper000Init(cartridge); 
                 break;
             case SxROM:
-                printf("Mapper not supported  id: %d\n", mapper_id); 
-                fclose(cartridge_file); 
-                exit(1);
+                cartridge->mapper_info = malloc(sizeof(struct Mapper001Info));
+                Mapper001Init(cartridge); 
+                break;
             case UxROM:
                 cartridge->mapper_info = malloc(sizeof(struct Mapper002Info));
-                Mapper002Init(cartridge, cartridge->prg_rom_16KB_units); 
+                Mapper002Init(cartridge); 
                 break;
             case CNROM:
                 cartridge->mapper_info = malloc(sizeof(struct Mapper003Info));
-                Mapper003Init(cartridge, cartridge->prg_rom_16KB_units); 
+                Mapper003Init(cartridge); 
                 break;
             case MMC3:
             case AxROM:
             case ColorDreams:
             case GxROM:
             default: 
-                printf("Mapper not supported  id: %d\n", mapper_id); 
                 fclose(cartridge_file); 
-                exit(1);
+                LOG(ERROR, CARTRIDGE, "Mapper not supported  id: %d\n", mapper_id); 
         }
 
 
@@ -155,9 +156,9 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         }
 
 
-        unsigned int prg_rom_size = cartridge->prg_rom_16KB_units * 16 * 1024;
-        unsigned int chr_rom_size = cartridge->chr_rom_8KB_units * 8 * 1024;
-        unsigned int prg_ram_size = cartridge->prg_ram_8KB_units * 8 * 1024;
+        size_t prg_rom_size = cartridge->prg_rom_16KB_units * 0x4000;
+        size_t chr_rom_size = cartridge->chr_rom_8KB_units * 0x2000;
+        size_t prg_ram_size = cartridge->prg_ram_8KB_units * 0x2000;
 
         cartridge->prg_rom = malloc(prg_rom_size * sizeof(uint8_t));
         cartridge->chr_rom = malloc(chr_rom_size * sizeof(uint8_t));
@@ -165,9 +166,12 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         memset(cartridge->prg_rom, 0, prg_rom_size * sizeof(uint8_t));
         memset(cartridge->chr_rom, 0, chr_rom_size * sizeof(uint8_t));
 
-        fread(cartridge->prg_rom, sizeof(uint8_t), prg_rom_size, cartridge_file);
-        fread(cartridge->chr_rom, sizeof(uint8_t), chr_rom_size, cartridge_file);
-
+        if (fread(cartridge->prg_rom, sizeof(uint8_t), prg_rom_size, cartridge_file) != prg_rom_size) {
+            LOG(ERROR, CARTRIDGE, "couldn't read prg rom fully\n");
+        } 
+        if (!cartridge->supports_chr_ram && fread(cartridge->chr_rom, sizeof(uint8_t), chr_rom_size, cartridge_file) != chr_rom_size) {
+            LOG(ERROR, CARTRIDGE, "couldn't read chr rom fully\n");
+        }
 
         if (cartridge->prg_ram_8KB_units != 0) {
             cartridge->prg_ram = malloc(prg_ram_size * sizeof(uint8_t));
@@ -180,7 +184,7 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
     }
 
     fclose(cartridge_file);
-    printf("Successfully loaded: %s\n", filename);
+    LOG(INFO, CARTRIDGE, "Successfully loaded: %s\n", filename);
     return;
 }
 
@@ -239,8 +243,7 @@ void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring
             cartridge->mirroring_offsets[3] = 0x0;
             break;
         default:
-            printf("unsuported mirroring\n");
-            exit(1);
+            LOG(ERROR, CARTRIDGE, "unsuported mirroring\n");
     }
 }
 
