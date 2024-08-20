@@ -376,7 +376,7 @@ void PPUWriteScroll(struct PPU* ppu, const uint8_t data) {
     if (ppu->w) {
         // 2. write
         ppu->t &= 0b1000110000011111;
-        ppu->t |= ((data & 0b00000111) << 12) | ((data & 0x11111000) << 2);
+        ppu->t |= ((data & 0b00000111) << 12) | ((data & 0b11111000) << 2);
         ppu->w = 0; 
     } else {
         // 1. write
