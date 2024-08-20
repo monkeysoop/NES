@@ -68,6 +68,24 @@ struct Mapper000Info {
     uint16_t prg_rom_mask;
 };
 
+struct Mapper001Info {
+    uint8_t shift_register;
+    uint8_t control_register;
+
+    uint8_t chr_1_register;
+    uint8_t chr_2_register;
+    uint8_t prg_register;
+
+    uint8_t shift_register_counter;
+    
+
+    uint32_t prg_rom_bank_1_offset;
+    uint32_t prg_rom_bank_2_offset;
+
+    uint32_t chr_rom_bank_1_offset;
+    uint32_t chr_rom_bank_2_offset;
+};
+
 struct Mapper002Info {
     uint32_t prg_rom_bank_1_offset;
     uint32_t prg_rom_bank_2_offset;
@@ -90,9 +108,9 @@ void CartridgeWriteCPU(struct Cartridge* cartridge, const uint16_t address, cons
 void CartridgeWritePPU(struct Cartridge* cartridge, const uint16_t address, const uint8_t value);
 
 
-void Mapper000Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units);
-void Mapper001Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units, uint8_t prg_ram_8KB_units, uint8_t chr_rom_8KB_units);
-void Mapper002Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units);
-void Mapper003Init(struct Cartridge* cartridge, uint8_t prg_rom_16KB_units);
+void Mapper000Init(struct Cartridge* cartridge);
+void Mapper001Init(struct Cartridge* cartridge);
+void Mapper002Init(struct Cartridge* cartridge);
+void Mapper003Init(struct Cartridge* cartridge);
 
 #endif
