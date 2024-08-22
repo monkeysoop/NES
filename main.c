@@ -1,10 +1,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include <stdio.h>
 #include <stdbool.h>
 
 #include "emulator.h"
-
+#include "logger.h"
 
 
 #define FONT_TEXTURE_CHAR_SIZE 8
@@ -411,8 +410,7 @@ void DebugRender(struct DebugWindow debug_window) {
 int main(int argc, char** argv)
 {
     if (argc != 2) {
-        printf("please pass the name of the rom file (xxx.nes) as first parameter\n");
-        exit(1);
+        LOG(ERROR, MAIN, "please pass the name of the rom file (xxx.nes) as first parameter\n");
     }
 
 
@@ -489,10 +487,16 @@ int main(int argc, char** argv)
 	int frame_counter = 0;
 
     bool debug_shown = false;
-    bool paused = false;
+    bool paused = true;
 
+    float desired_fps = 60.0f; 
+    int last_ticks = SDL_GetTicks();
     bool quit = false;
     while (!quit) {
+        if (((int)SDL_GetTicks() - last_ticks) < (1000.0f / desired_fps)) {
+            continue;
+        } 
+        last_ticks = SDL_GetTicks();
 		// amíg van feldolgozandó üzenet dolgozzuk fel mindet:
         SDL_Event ev;
         while (SDL_PollEvent(&ev)) {
@@ -530,6 +534,7 @@ int main(int argc, char** argv)
                             break;
                         case SDLK_SPACE: paused = !(paused); break;
                         case SDLK_r: EmulatorReset(&emulator); break;
+                        case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
                         case SDLK_p: debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; break;
                         case SDLK_n: debug_window.layout.selected_nametable = (debug_window.layout.selected_nametable + 1) % 4; break;
                         case SDLK_w: EmulatorKeyUp(&emulator, UP); break;
@@ -600,7 +605,7 @@ int main(int argc, char** argv)
     	frame_counter++;
         Uint64 current_time = SDL_GetTicks64();
 		if ((current_time - previous_time) > 1000) {
-            printf("FPS: %d\t\tframe time: %.2f ms\n", frame_counter, (1000.0 / (float)frame_counter));
+            LOG(INFO, MAIN, "FPS: %d\t\tframe time: %.2f ms\n", frame_counter, (1000.0 / (float)frame_counter));
 			frame_counter = 0;
 			previous_time += 1000;
 		}
