@@ -8,7 +8,9 @@ uint8_t Mapper003ReadCPU(struct Cartridge* cartridge, uint16_t address);
 uint8_t Mapper003ReadPPU(struct Cartridge* cartridge, uint16_t address);
 void Mapper003WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
 void Mapper003WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
-void Mapper003ScanlineIRQ(struct Cartridge* cartridge);
+
+bool Mapper003ScanlineIRQ(struct Cartridge* cartridge);
+
 
 void Mapper003Init(struct Cartridge* cartridge) {
     struct Mapper003Info* mapper_info = (struct Mapper003Info*)cartridge->mapper_info;
@@ -45,7 +47,6 @@ uint8_t Mapper003ReadPPU(struct Cartridge* cartridge, uint16_t address) {
     return cartridge->chr_rom[(address & 0x1FFF) + mapper_info->chr_rom_offset];
 }
 
-
 void Mapper003WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper003Info* mapper_info = (struct Mapper003Info*)cartridge->mapper_info;
     if (address < 0x6000) {
@@ -58,13 +59,15 @@ void Mapper003WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 }
 
 void Mapper003WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
+    struct Mapper003Info* mapper_info = (struct Mapper003Info*)cartridge->mapper_info;
     if (cartridge->supports_chr_ram) {
-        cartridge->chr_rom[address & 0x1FFF] = data;
+        cartridge->chr_rom[(address & 0x1FFF) + mapper_info->chr_rom_offset] = data;
     } else {
         LOG(ERROR, MAPPER, "Attempted write to chr rom\n");
     }
 }
 
 
-void Mapper003ScanlineIRQ(struct Cartridge* cartridge) {
+bool Mapper003ScanlineIRQ(struct Cartridge* cartridge) {
+    return false;
 }

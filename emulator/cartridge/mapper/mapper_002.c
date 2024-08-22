@@ -8,7 +8,9 @@ uint8_t Mapper002ReadCPU(struct Cartridge* cartridge, uint16_t address);
 uint8_t Mapper002ReadPPU(struct Cartridge* cartridge, uint16_t address);
 void Mapper002WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
 void Mapper002WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
-void Mapper002ScanlineIRQ(struct Cartridge* cartridge);
+
+bool Mapper002ScanlineIRQ(struct Cartridge* cartridge);
+
 
 void Mapper002Init(struct Cartridge* cartridge) {
     struct Mapper002Info* mapper_info = (struct Mapper002Info*)cartridge->mapper_info;
@@ -40,7 +42,6 @@ uint8_t Mapper002ReadPPU(struct Cartridge* cartridge, uint16_t address) {
     return cartridge->chr_rom[address & 0x1FFF];
 }
 
-
 void Mapper002WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper002Info* mapper_info = (struct Mapper002Info*)cartridge->mapper_info;
     if (address < 0x6000) {
@@ -61,5 +62,6 @@ void Mapper002WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 }
 
 
-void Mapper002ScanlineIRQ(struct Cartridge* cartridge) {
+bool Mapper002ScanlineIRQ(struct Cartridge* cartridge) {
+    return false;
 }

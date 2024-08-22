@@ -95,6 +95,12 @@ enum RenderState {
     FINISHED,
 };
 
+enum GenerateInterrupt {
+    GENERATE_NMI,
+    GENERATE_IRQ,
+    GENERATE_NO_INTERRUPT,
+};
+
 
 
 struct PPU {
@@ -133,8 +139,8 @@ struct PPU {
 void PPUInit(struct PPU* ppu, struct PPUBus* ppu_bus, enum TVSystem tv_system);
 void PPUReset(struct PPU* ppu, enum TVSystem tv_system);
 
-bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
-bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
+enum GenerateInterrupt PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
+enum GenerateInterrupt PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]);
 
 void DebugView(
     struct PPU* ppu, 

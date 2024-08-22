@@ -31,19 +31,43 @@ void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename) {
 
 void EmulatorKeyDown(struct Emulator* emulator, enum Button button) {
     ControllerKeyDown1(&emulator->controller, button);
+    ControllerKeyDown2(&emulator->controller, button);
 }
 
 void EmulatorKeyUp(struct Emulator* emulator, enum Button button) {
     ControllerKeyUp1(&emulator->controller, button);
+    ControllerKeyUp2(&emulator->controller, button);
 }
 
 void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
     uint64_t temp = 0;
     switch (emulator->cartridge.tv_system) {
+        //if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
+            //    CPUNonMaskableInterrupt(&emulator->cpu);
+            //}
+            //if (emulator->ppu.render_state == FINISHED) {
+            //    emulator->ppu.render_state = PRE_RENDER;
+            //}
+            //if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
+            //    CPUNonMaskableInterrupt(&emulator->cpu);
+            //}
+            //if (emulator->ppu.render_state == FINISHED) {
+            //    emulator->ppu.render_state = PRE_RENDER;
+            //}
+            //if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
+            //    CPUNonMaskableInterrupt(&emulator->cpu);
+            //}
+            //if (emulator->ppu.render_state == FINISHED) {
+            //    emulator->ppu.render_state = PRE_RENDER;
+            //}
+            //CPUClock(&emulator->cpu);
+
         case NTSC: 
             while (emulator->ppu.render_state != FINISHED) {
-                if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
-                    CPUNonMaskableInterrupt(&emulator->cpu);
+                switch (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
+                    case GENERATE_NMI: CPUNonMaskableInterrupt(&emulator->cpu); break;
+                    case GENERATE_IRQ: CPUInterruptRequest(&emulator->cpu); break;
+                    case GENERATE_NO_INTERRUPT: break;
                 }
                 
                 if (temp % 3 == 2) {

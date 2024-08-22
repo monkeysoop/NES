@@ -22,7 +22,7 @@ struct PPUBus {
 void PPUBusInit(struct PPUBus* ppu_bus, struct Cartridge* cartridge);
 void PPUBusReset(struct PPUBus* ppu_bus);
 
-void PPUBusScanlineIRQ(struct PPUBus* ppu_bus);
+bool PPUBusScanlineIRQ(struct PPUBus* ppu_bus);
 
 uint8_t PPUBusRead(struct PPUBus* ppu_bus, const uint16_t address);
 void PPUBusWrite(struct PPUBus* ppu_bus, const uint16_t address, const uint8_t data);

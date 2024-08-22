@@ -23,10 +23,12 @@ uint8_t Mapper001ReadCPU(struct Cartridge* cartridge, uint16_t address);
 uint8_t Mapper001ReadPPU(struct Cartridge* cartridge, uint16_t address);
 void Mapper001WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
 void Mapper001WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
-void Mapper001ScanlineIRQ(struct Cartridge* cartridge);
+
+bool Mapper001ScanlineIRQ(struct Cartridge* cartridge);
 
 static void SetCHRBanks(struct Cartridge* cartridge);
 static void SetPRGBanks(struct Cartridge* cartridge);
+
 
 void Mapper001Init(struct Cartridge* cartridge) {
     struct Mapper001Info* mapper_info = (struct Mapper001Info*)cartridge->mapper_info;
@@ -82,7 +84,6 @@ uint8_t Mapper001ReadPPU(struct Cartridge* cartridge, uint16_t address) {
     }
 }
 
-
 void Mapper001WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper001Info* mapper_info = (struct Mapper001Info*)cartridge->mapper_info;
     if (address < 0x6000) {
@@ -106,7 +107,7 @@ void Mapper001WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
         mapper_info->shift_register_counter++;
 
         if (mapper_info->shift_register_counter == 5) {
-            switch ((address & 0b0110000000000000) | 0b1000000000000000) {
+            switch (address & 0b1110000000000000) {
                 case 0x8000: 
                     mapper_info->control_register = mapper_info->shift_register & SHIFT_REGISTER_ACTIVE_BITS;
 
@@ -143,16 +144,20 @@ void Mapper001WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 void Mapper001WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper001Info* mapper_info = (struct Mapper001Info*)cartridge->mapper_info;
     if (cartridge->supports_chr_ram) {
-        cartridge->chr_rom[(address & 0x1FFF) + mapper_info->chr_rom_bank_1_offset] = data;
+        if (address < 0x1000) {
+            cartridge->chr_rom[(address & 0x0FFF) + mapper_info->chr_rom_bank_1_offset] = data;
+        } else {
+            cartridge->chr_rom[(address & 0x0FFF) + mapper_info->chr_rom_bank_2_offset] = data;
+        }
     } else {
         LOG(ERROR, MAPPER, "Attempted write to chr rom\n");
     }
 }
 
 
-void Mapper001ScanlineIRQ(struct Cartridge* cartridge) {
+bool Mapper001ScanlineIRQ(struct Cartridge* cartridge) {
+    return false;
 }
-
 
 
 static void SetCHRBanks(struct Cartridge* cartridge) {
@@ -173,7 +178,6 @@ static void SetCHRBanks(struct Cartridge* cartridge) {
 
 static void SetPRGBanks(struct Cartridge* cartridge) {
     struct Mapper001Info* mapper_info = (struct Mapper001Info*)cartridge->mapper_info;
-    //printf("before: 0x%08X     0x%08X\n", mapper_info->prg_rom_bank_1_offset, mapper_info->prg_rom_bank_2_offset);
     switch ((mapper_info->control_register & CONTROL_REGISTER_PRG_ROM_BANK_MODE_BITS) >> 2) {
         case 0:
         case 1: 
@@ -192,5 +196,4 @@ static void SetPRGBanks(struct Cartridge* cartridge) {
             mapper_info->prg_rom_bank_2_offset = (cartridge->prg_rom_16KB_units - 1) * 0x4000;
             break;
     }
-    //printf("after: 0x%08X     0x%08X\n", mapper_info->prg_rom_bank_1_offset, mapper_info->prg_rom_bank_2_offset);
 }

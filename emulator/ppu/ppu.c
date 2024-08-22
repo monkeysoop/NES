@@ -65,10 +65,11 @@ void PPUReset(struct PPU* ppu, enum TVSystem tv_system) {
 }
 
 
-bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
-    bool interrupt_cpu = false; // the reason why the cartridge gets interrupted from here and the cpu isn't is 
-                                // because PPU struct can't have a reference to CPU (that would create circular dependency)
-                                // so either is has a void pointer to a callback or returns a bool value to the emulator
+enum GenerateInterrupt PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
+    // the reason why the cartridge gets interrupted from here and the cpu isn't is 
+    // because PPU struct can't have a reference to CPU (that would create circular dependency)
+    // so either is has a void pointer to a callback or informs the emulator trough the return value, which interrupts it
+    enum GenerateInterrupt generate_interrupt = GENERATE_NO_INTERRUPT;
 
     switch (ppu->render_state) {
         case RENDER: 
@@ -196,7 +197,9 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 ppu->v &= ~0x041F;
                 ppu->v |= ppu->t & 0x041F;
             } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
-                PPUBusScanlineIRQ(ppu->ppu_bus);
+                if (PPUBusScanlineIRQ(ppu->ppu_bus)) {
+                    generate_interrupt = GENERATE_IRQ;
+                }
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) { // checking if sprite rendering is enabled is unnecesseary because if it's disabled than the oam cache won't be read                
                 ppu->scanline++;
                 ppu->cycle = 0;
@@ -240,7 +243,7 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
             if (ppu->cycle == 1 && ppu->scanline == NTSC_POST_RENDER_SCANLINE_END) {
                 ppu->status_register |= VERTICAL_BLANK_BIT;
                 if (ppu->ctrl_register & GENERATE_NMI_BIT) {
-                    interrupt_cpu = true;
+                    generate_interrupt = GENERATE_NMI;
                 }
             } else if (ppu->cycle == SCANLINE_LAST_CYCLE) {
                 ppu->scanline++;
@@ -262,7 +265,9 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
                 ppu->v &= ~0x7BE0;
                 ppu->v |= ppu->t & 0x7BE0;
             } else if (ppu->cycle == SCANLINE_IRQ_CYCLE && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
-                PPUBusScanlineIRQ(ppu->ppu_bus);
+                if (PPUBusScanlineIRQ(ppu->ppu_bus)) {
+                    generate_interrupt = GENERATE_IRQ;
+                }
             } else if (ppu->cycle == (SCANLINE_LAST_CYCLE - 1) && ppu->is_odd_frame && (ppu->mask_register & (SHOW_BACKGROUND_BIT | SHOW_SPRITES_BIT))) {
                 ppu->scanline++;
                 ppu->cycle = 0;
@@ -283,10 +288,10 @@ bool PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES
     }
     ppu->cycle++;
 
-    return interrupt_cpu;
+    return generate_interrupt;
 }
 
-bool PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
+enum GenerateInterrupt PPUClockPAL(struct PPU* ppu, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
     LOG(ERROR, PPU, "PAL not implemented\n");
 }
 

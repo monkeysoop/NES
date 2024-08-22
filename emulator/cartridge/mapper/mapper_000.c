@@ -8,7 +8,9 @@ uint8_t Mapper000ReadCPU(struct Cartridge* cartridge, uint16_t address);
 uint8_t Mapper000ReadPPU(struct Cartridge* cartridge, uint16_t address);
 void Mapper000WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
 void Mapper000WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t data);
-void Mapper000ScanlineIRQ(struct Cartridge* cartridge);
+
+bool Mapper000ScanlineIRQ(struct Cartridge* cartridge);
+
 
 void Mapper000Init(struct Cartridge* cartridge) {
     struct Mapper000Info* mapper_info = (struct Mapper000Info*)cartridge->mapper_info;
@@ -47,7 +49,6 @@ uint8_t Mapper000ReadPPU(struct Cartridge* cartridge, uint16_t address) {
     return cartridge->chr_rom[address & 0x1FFF];
 }
 
-
 void Mapper000WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     if (address < 0x6000) {
         LOG(ERROR, MAPPER, "Attempted write to unmapped area\n");
@@ -71,5 +72,6 @@ void Mapper000WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 }
 
 
-void Mapper000ScanlineIRQ(struct Cartridge* cartridge) {
+bool Mapper000ScanlineIRQ(struct Cartridge* cartridge) {
+    return false;
 }

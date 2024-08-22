@@ -14,8 +14,8 @@ void PPUBusReset(struct PPUBus* ppu_bus) {
     memset(ppu_bus->ppu_vram, 0x00, VRAM_SIZE * sizeof(uint8_t));
 }
 
-void PPUBusScanlineIRQ(struct PPUBus* ppu_bus) {
-    CartridgeScanlineIRQ(ppu_bus->cartridge);
+bool PPUBusScanlineIRQ(struct PPUBus* ppu_bus) {
+    return CartridgeScanlineIRQ(ppu_bus->cartridge);
 }
 
 uint8_t PPUBusRead(struct PPUBus* ppu_bus, const uint16_t address) {
