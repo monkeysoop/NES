@@ -42,26 +42,6 @@ void EmulatorKeyUp(struct Emulator* emulator, enum Button button) {
 void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {
     uint64_t temp = 0;
     switch (emulator->cartridge.tv_system) {
-        //if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
-            //    CPUNonMaskableInterrupt(&emulator->cpu);
-            //}
-            //if (emulator->ppu.render_state == FINISHED) {
-            //    emulator->ppu.render_state = PRE_RENDER;
-            //}
-            //if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
-            //    CPUNonMaskableInterrupt(&emulator->cpu);
-            //}
-            //if (emulator->ppu.render_state == FINISHED) {
-            //    emulator->ppu.render_state = PRE_RENDER;
-            //}
-            //if (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
-            //    CPUNonMaskableInterrupt(&emulator->cpu);
-            //}
-            //if (emulator->ppu.render_state == FINISHED) {
-            //    emulator->ppu.render_state = PRE_RENDER;
-            //}
-            //CPUClock(&emulator->cpu);
-
         case NTSC: 
             while (emulator->ppu.render_state != FINISHED) {
                 switch (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
@@ -80,11 +60,18 @@ void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN
             break;
         case PAL:
             while (emulator->ppu.render_state != FINISHED) {
-                PPUClockPAL(&emulator->ppu, pixels_buffer);
-                //PPUClockPAL(&emulator->ppu, pixels_buffer);
-                //PPUClockPAL(&emulator->ppu, pixels_buffer);
+                switch (PPUClockPAL(&emulator->ppu, pixels_buffer)) {
+                    case GENERATE_NMI: CPUNonMaskableInterrupt(&emulator->cpu); break;
+                    case GENERATE_IRQ: CPUInterruptRequest(&emulator->cpu); break;
+                    case GENERATE_NO_INTERRUPT: break;
+                }
+
                 if (temp % 15 == 14 && emulator->ppu.render_state != FINISHED) {    // makes the ratio of ppu and cpu cycles to 3.2 : 1 instead of 3 : 1
-                    PPUClockPAL(&emulator->ppu, pixels_buffer);
+                    switch (PPUClockPAL(&emulator->ppu, pixels_buffer)) {
+                        case GENERATE_NMI: CPUNonMaskableInterrupt(&emulator->cpu); break;
+                        case GENERATE_IRQ: CPUInterruptRequest(&emulator->cpu); break;
+                        case GENERATE_NO_INTERRUPT: break;
+                    }
                 }
 
                 if (temp % 3 == 2) {
