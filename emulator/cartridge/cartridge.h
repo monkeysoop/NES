@@ -61,7 +61,7 @@ struct Cartridge {
     void (*MapperWriteCPU)(struct Cartridge*, uint16_t, uint8_t);
     void (*MapperWritePPU)(struct Cartridge*, uint16_t, uint8_t);
 
-    void (*MapperScanlineIRQ)(struct Cartridge*);
+    bool (*MapperScanlineIRQ)(struct Cartridge*);
 };
 
 struct Mapper000Info {
@@ -96,10 +96,35 @@ struct Mapper003Info {
     uint32_t chr_rom_offset;
 };
 
+struct Mapper004Info {
+    uint8_t bank_select_register;
+    uint8_t bank_select_register_previous;
+    uint8_t bank_value_register;
+
+    uint8_t IRQ_latch_register;
+    uint8_t IRQ_counter_register;
+    bool IRQ_enabled;
+    bool IRQ_reload_latch;
+
+    uint32_t prg_rom_bank_1_offset;
+    uint32_t prg_rom_bank_2_offset;
+    uint32_t prg_rom_bank_3_offset;
+    uint32_t prg_rom_bank_4_offset;
+
+    uint32_t chr_rom_bank_1_offset;
+    uint32_t chr_rom_bank_2_offset;
+    uint32_t chr_rom_bank_3_offset;
+    uint32_t chr_rom_bank_4_offset;
+    uint32_t chr_rom_bank_5_offset;
+    uint32_t chr_rom_bank_6_offset;
+    uint32_t chr_rom_bank_7_offset;
+    uint32_t chr_rom_bank_8_offset;
+};
+
 void CartridgeInit(struct Cartridge* cartridge, const char* filename);
 void CartridgeClean(struct Cartridge* cartridge);
 
-void CartridgeScanlineIRQ(struct Cartridge* cartridge);
+bool CartridgeScanlineIRQ(struct Cartridge* cartridge);
 void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring);
 
 uint8_t CartridgeReadCPU(struct Cartridge* cartridge, const uint16_t address);
@@ -112,5 +137,6 @@ void Mapper000Init(struct Cartridge* cartridge);
 void Mapper001Init(struct Cartridge* cartridge);
 void Mapper002Init(struct Cartridge* cartridge);
 void Mapper003Init(struct Cartridge* cartridge);
+void Mapper004Init(struct Cartridge* cartridge);
 
 #endif

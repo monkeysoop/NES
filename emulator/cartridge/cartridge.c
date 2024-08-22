@@ -119,9 +119,17 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         uint8_t mapper_id = header.mapper_id_bits_0123 | (header.mapper_id_bits_4567 << 4);
 
         LOG(DEBUG_INFO, CARTRIDGE, "mapper id: %d\n", mapper_id);
-        LOG(DEBUG_INFO, CARTRIDGE, "prg rom size: %d * 16KB\nchr rom size: %d * 8KB\nprg ram size: %d * 8KB\n", cartridge->prg_rom_16KB_units, cartridge->chr_rom_8KB_units, cartridge->prg_ram_8KB_units);
+        LOG(DEBUG_INFO, CARTRIDGE, 
+            "prg rom size: %d * 16KB = %dKB\nchr rom size: %d * 8KB = %dKB\nprg ram size: %d * 8KB = %dKB\n", 
+            cartridge->prg_rom_16KB_units, (cartridge->prg_rom_16KB_units * 16), 
+            cartridge->chr_rom_8KB_units, (cartridge->chr_rom_8KB_units * 8), 
+            cartridge->prg_ram_8KB_units, (cartridge->prg_ram_8KB_units * 8)
+        );
 
         cartridge->mapper_id = mapper_id;
+
+        enum Mirroring mirroring = header.mirroring ? VERTICAL_MIRRORING : HORIZONTAL_MIRRORING;
+        CartridgeSetMirroring(cartridge, mirroring);
 
         switch (mapper_id) {
             case NROM: 
@@ -141,6 +149,9 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
                 Mapper003Init(cartridge); 
                 break;
             case MMC3:
+                cartridge->mapper_info = malloc(sizeof(struct Mapper004Info));
+                Mapper004Init(cartridge); 
+                break;
             case AxROM:
             case ColorDreams:
             case GxROM:
@@ -179,8 +190,6 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         }
 
 
-        enum Mirroring mirroring = header.mirroring ? VERTICAL_MIRRORING : HORIZONTAL_MIRRORING;
-        CartridgeSetMirroring(cartridge, mirroring);
     }
 
     fclose(cartridge_file);
@@ -198,45 +207,50 @@ void CartridgeClean(struct Cartridge* cartridge) {
     free(cartridge->mapper_info);
 }
 
-void CartridgeScanlineIRQ(struct Cartridge* cartridge) {
-    if (cartridge->mapper_id == MMC3) {
-        cartridge->MapperScanlineIRQ(cartridge);
-    }
+bool CartridgeScanlineIRQ(struct Cartridge* cartridge) {
+    return cartridge->MapperScanlineIRQ(cartridge);
 }
 
 void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring) {
+    cartridge->mirroring = mirroring;
     switch (mirroring) {
         case VERTICAL_MIRRORING: 
+            LOG(DEBUG_INFO, CARTRIDGE, "Vertical Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x400;
             cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case HORIZONTAL_MIRRORING: 
+            LOG(DEBUG_INFO, CARTRIDGE, "Horizontal Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x400;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case ONE_SCREEN_MIRRORING: 
+            LOG(DEBUG_INFO, CARTRIDGE, "One Screen Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x0;
             break;
         case ONE_SCREEN_LOWER_MIRRORING: 
+            LOG(DEBUG_INFO, CARTRIDGE, "One Screen Lower Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x0;
             break;
         case ONE_SCREEN_UPPER_MIRRORING: 
+            LOG(DEBUG_INFO, CARTRIDGE, "One Screen Upper Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x400;
             cartridge->mirroring_offsets[1] = 0x400;
             cartridge->mirroring_offsets[2] = 0x400;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case FOUR_SCREEN_MIRRORING: 
+            LOG(DEBUG_INFO, CARTRIDGE, "Four Screen Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x0;
