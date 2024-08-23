@@ -51,7 +51,7 @@ void Mapper007WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
     if (address < 0x6000) {
         LOG(ERROR, MAPPER, "Attempted write to unmapped area\n");
     } else if (address < 0x8000) {
-        LOG(ERROR, MAPPER, "Attempted read from prg ram that's not supported by mapper 007\n");
+        LOG(ERROR, MAPPER, "Attempted write to prg ram that's not supported by mapper 007\n");
     } else {
         mapper_info->prg_rom_bank_offset = (data & BANK_SELECT_PRG_ROM_BITS) * 0x8000;
         if (data & BANK_SELECT_MIRRORING_BIT) {
