@@ -71,7 +71,7 @@ static inline void SetZeroFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= ZERO) : (cpu->registers.status_flags &= (~ZERO));    
     return;
 }
-static inline void SetIrgDisableFlagValue(struct CPU* cpu, const uint8_t value) {
+static inline void SetIrqDisableFlagValue(struct CPU* cpu, const uint8_t value) {
     (value) ? (cpu->registers.status_flags |= IRQ_DISABLE) : (cpu->registers.status_flags &= (~IRQ_DISABLE));    
     return;
 }
@@ -334,7 +334,7 @@ static void BRK(struct CPU* cpu, const uint16_t absolute_address) {
     StackPushByte(cpu, cpu->registers.status_flags);
     SetBrkCommandFlagValue(cpu, 0);
     
-    SetIrgDisableFlagValue(cpu, 1);
+    SetIrqDisableFlagValue(cpu, 1);
 
     cpu->registers.program_counter = ReadLittleEndianWord(cpu, BREAK_INTERRUPT_OFFSET);
     return;
@@ -491,7 +491,7 @@ static void BVC(struct CPU* cpu, const uint16_t absolute_address) {
     return;
 }
 static void CLI(struct CPU* cpu, const uint16_t absolute_address) {
-    SetIrgDisableFlagValue(cpu, 0);
+    SetIrqDisableFlagValue(cpu, 0);
     return;
 }
 static void RTS(struct CPU* cpu, const uint16_t absolute_address) {
@@ -565,7 +565,7 @@ static void BVS(struct CPU* cpu, const uint16_t absolute_address) {
     return;
 }
 static void SEI(struct CPU* cpu, const uint16_t absolute_address) {
-    SetIrgDisableFlagValue(cpu, 1);
+    SetIrqDisableFlagValue(cpu, 1);
     return;
 }
 static void STA(struct CPU* cpu, const uint16_t absolute_address) {
@@ -1096,7 +1096,7 @@ void CPUInit(struct CPU* cpu, struct CPUBus* cpu_bus) {
     cpu->oam_data = 0;
 
     SetUnusedFlagValue(cpu, 1);
-    SetIrgDisableFlagValue(cpu, 1);
+    SetIrqDisableFlagValue(cpu, 1);
 }
 
 
@@ -1106,7 +1106,7 @@ void CPUReset(struct CPU* cpu) {
     cpu->registers.stack_pointer -= 3;
 
     SetUnusedFlagValue(cpu, 1);
-    SetIrgDisableFlagValue(cpu, 1);
+    SetIrqDisableFlagValue(cpu, 1);
 
     cpu->remaining_cycles = 8;
 
@@ -1124,7 +1124,7 @@ void CPUInterruptRequest(struct CPU* cpu) {
         StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
 
         SetBrkCommandFlagValue(cpu, 0);
-        SetIrgDisableFlagValue(cpu, 1);
+        SetIrqDisableFlagValue(cpu, 1);
         SetUnusedFlagValue(cpu, 1);
 
         StackPushByte(cpu, cpu->registers.status_flags);
@@ -1139,7 +1139,7 @@ void CPUNonMaskableInterrupt(struct CPU* cpu) {
     StackPushLittleEndianWord(cpu, cpu->registers.program_counter);
 
     SetBrkCommandFlagValue(cpu, 0);
-    SetIrgDisableFlagValue(cpu, 1);
+    SetIrqDisableFlagValue(cpu, 1);
     SetUnusedFlagValue(cpu, 1);
 
     StackPushByte(cpu, cpu->registers.status_flags);

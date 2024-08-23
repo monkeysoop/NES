@@ -27,14 +27,14 @@
 #define NON_MASKABLE_INTERRUPT_OFFSET 0xFFFA
 
 
-#define CARRY 0b00000001
-#define ZERO 0b00000010
-#define IRQ_DISABLE 0b00000100
+#define CARRY        0b00000001
+#define ZERO         0b00000010
+#define IRQ_DISABLE  0b00000100
 #define DECIMAL_MODE 0b00001000
-#define BRK_COMMAND 0b00010000
-#define UNUSED 0b00100000
-#define OVERFLOW 0b01000000
-#define NEGATIVE 0b10000000
+#define BRK_COMMAND  0b00010000
+#define UNUSED       0b00100000
+#define OVERFLOW     0b01000000
+#define NEGATIVE     0b10000000
 
 struct Registers {
     uint8_t a_register;
