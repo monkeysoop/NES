@@ -507,7 +507,7 @@ int main(int argc, char** argv)
 				case SDL_KEYDOWN:
                     switch (ev.key.keysym.sym) {
                         case SDLK_ESCAPE: quit = true; break;
-                        case SDLK_PERIOD: quit = true; break;
+                        case SDLK_q: quit = true; break;
                         case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
                         case SDLK_w: EmulatorKeyDown(&emulator, UP, PLAYER_1); break;
                         case SDLK_a: EmulatorKeyDown(&emulator, LEFT, PLAYER_1); break;

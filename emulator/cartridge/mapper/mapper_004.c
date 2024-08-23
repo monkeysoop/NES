@@ -32,24 +32,24 @@ void Mapper004Init(struct Cartridge* cartridge) {
     mapper_info->bank_select_register_previous = 0;
     mapper_info->bank_value_register = 0;
 
-    mapper_info->IRQ_latch_register = 0;
-    mapper_info->IRQ_counter_register = 0;
-    mapper_info->IRQ_enabled = false;
-    mapper_info->IRQ_reload_latch = false;
+    mapper_info->irq_latch_register = 0;
+    mapper_info->irq_counter_register = 0;
+    mapper_info->irq_enabled = false;
+    mapper_info->irq_reload_latch = false;
 
     mapper_info->prg_rom_bank_1_offset = 0;
     mapper_info->prg_rom_bank_2_offset = 0;
     mapper_info->prg_rom_bank_3_offset = (cartridge->prg_rom_16KB_units - 1) * 0x4000;
     mapper_info->prg_rom_bank_4_offset = (cartridge->prg_rom_16KB_units - 1) * 0x4000 + 0x2000;
 
-    mapper_info->chr_rom_bank_1_offset = 0x0000;
-    mapper_info->chr_rom_bank_2_offset = 0x0400;
-    mapper_info->chr_rom_bank_3_offset = 0x0800;
-    mapper_info->chr_rom_bank_4_offset = 0x0C00;
-    mapper_info->chr_rom_bank_5_offset = 0x1000;
-    mapper_info->chr_rom_bank_6_offset = 0x1400;
-    mapper_info->chr_rom_bank_7_offset = 0x1800;
-    mapper_info->chr_rom_bank_8_offset = 0x1C00;
+    mapper_info->chr_rom_bank_1_offset = 0;
+    mapper_info->chr_rom_bank_2_offset = 0;
+    mapper_info->chr_rom_bank_3_offset = 0;
+    mapper_info->chr_rom_bank_4_offset = 0;
+    mapper_info->chr_rom_bank_5_offset = 0;
+    mapper_info->chr_rom_bank_6_offset = 0;
+    mapper_info->chr_rom_bank_7_offset = 0;
+    mapper_info->chr_rom_bank_8_offset = 0;
 
     cartridge->MapperReadCPU = &Mapper004ReadCPU;
     cartridge->MapperReadPPU = &Mapper004ReadPPU;
@@ -140,17 +140,17 @@ void Mapper004WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
                 // originally used in nes for write protecting prg ram to guard saves from corruption caused by power on/off
                 break;
             case 0xC000: 
-                mapper_info->IRQ_latch_register = data;
+                mapper_info->irq_latch_register = data;
                 break;
             case 0xC001: 
-                mapper_info->IRQ_counter_register = 0;
-                mapper_info->IRQ_reload_latch = true;
+                mapper_info->irq_counter_register = 0;
+                mapper_info->irq_reload_latch = true;
                 break;
             case 0xE000: 
-                mapper_info->IRQ_enabled = false;
+                mapper_info->irq_enabled = false;
                 break;
             case 0xE001: 
-                mapper_info->IRQ_enabled = true;;
+                mapper_info->irq_enabled = true;;
                 break;
         }
     }
@@ -184,14 +184,14 @@ void Mapper004WritePPU(struct Cartridge* cartridge, uint16_t address, uint8_t da
 
 bool Mapper004ScanlineIRQ(struct Cartridge* cartridge) {
     struct Mapper004Info* mapper_info = (struct Mapper004Info*)cartridge->mapper_info;
-    if ((mapper_info->IRQ_counter_register == 0) || mapper_info->IRQ_reload_latch) {
-        mapper_info->IRQ_counter_register = mapper_info->IRQ_latch_register;
-        mapper_info->IRQ_reload_latch = false;
+    if ((mapper_info->irq_counter_register == 0) || mapper_info->irq_reload_latch) {
+        mapper_info->irq_counter_register = mapper_info->irq_latch_register;
+        mapper_info->irq_reload_latch = false;
     } else {
-        mapper_info->IRQ_counter_register--;
+        mapper_info->irq_counter_register--;
     }
 
-    if ((mapper_info->IRQ_counter_register == 0) && mapper_info->IRQ_enabled) {
+    if ((mapper_info->irq_counter_register == 0) && mapper_info->irq_enabled) {
         return true;
     } else {
         return false;

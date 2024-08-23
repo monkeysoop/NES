@@ -101,10 +101,10 @@ struct Mapper004Info {
     uint8_t bank_select_register_previous;
     uint8_t bank_value_register;
 
-    uint8_t IRQ_latch_register;
-    uint8_t IRQ_counter_register;
-    bool IRQ_enabled;
-    bool IRQ_reload_latch;
+    uint8_t irq_latch_register;
+    uint8_t irq_counter_register;
+    bool irq_enabled;
+    bool irq_reload_latch;
 
     uint32_t prg_rom_bank_1_offset;
     uint32_t prg_rom_bank_2_offset;
