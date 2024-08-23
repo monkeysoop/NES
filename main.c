@@ -479,7 +479,7 @@ int main(int argc, char** argv)
     
     struct Emulator emulator;
     EmulatorInit(&emulator, argv[1]);
-    
+    LOG(INFO, MAIN, "Successfully loaded: %s\n", argv[1]);
 
 
     SDL_HideWindow(debug_window.window);
