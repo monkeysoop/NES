@@ -50,13 +50,19 @@ void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN
             while (emulator->ppu.render_state != FINISHED) {
                 switch (PPUClockNTSC(&emulator->ppu, pixels_buffer)) {
                     case GENERATE_NMI: CPUNonMaskableInterrupt(&emulator->cpu); break;
-                    case GENERATE_IRQ: CPUInterruptRequest(&emulator->cpu); break;
+                    case GENERATE_IRQ: 
+                        CPUInterruptRequest(&emulator->cpu); 
+                        break;
                     case GENERATE_NO_INTERRUPT: break;
                 }
                 
                 if (temp % 3 == 2) {
                     CPUClock(&emulator->cpu);
                     // apu
+                    if (emulator->cartridge.mapper_id == MMC3) {
+                        struct Mapper004Info* mapper_info = (struct Mapper004Info*)emulator->cartridge.mapper_info;
+                        CPUUpdateIrqDisableFlag(&emulator->cpu, mapper_info->irq_enabled);
+                    }
                 }
             
                 temp++;
@@ -81,6 +87,10 @@ void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN
                 if (temp % 3 == 2) {
                     CPUClock(&emulator->cpu);
                     // apu
+                    if (emulator->cartridge.mapper_id == MMC3) {
+                        struct Mapper004Info* mapper_info = (struct Mapper004Info*)emulator->cartridge.mapper_info;
+                        CPUUpdateIrqDisableFlag(&emulator->cpu, mapper_info->irq_enabled);
+                    }
                 }
 
                 temp++;

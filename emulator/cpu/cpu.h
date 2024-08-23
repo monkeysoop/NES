@@ -69,6 +69,8 @@ void CPUNonMaskableInterrupt(struct CPU* cpu);
 
 void CPUClock(struct CPU* cpu);
 
+void CPUUpdateIrqDisableFlag(struct CPU* cpu, bool irq_enabled);
+
 uint8_t CPUDisassemble(
     struct CPU* cpu, uint16_t start_address, uint16_t count, 
     char disassembly_buffer[DISASSEMBLY_BUFFER_HEIGHT][DISASSEMBLY_BUFFER_WIDTH],

@@ -1185,6 +1185,10 @@ void CPUClock(struct CPU* cpu) {
     cpu->tick_counter++;
 }
 
+void CPUUpdateIrqDisableFlag(struct CPU* cpu, bool irq_enabled) {
+    SetIrqDisableFlagValue(cpu, (irq_enabled ? 0 : 1));
+}
+
 
 static inline bool IsSafeToReadByte(uint16_t address) {
     return (address < 0x2000 || address >= 0x4020);
