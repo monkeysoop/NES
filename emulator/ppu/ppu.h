@@ -87,6 +87,15 @@ static const uint32_t nes_palette_colors_rgba[64] = {
 #define NES_SCREEN_WIDTH 256
 #define NES_SCREEN_HEIGHT 240
 
+
+#define DONT_FIX_SPRITE_OVERFLOW
+
+#ifdef FIX_SPRITE_OVERFLOW
+#define SCANLINE_OAM_BUFFER_SIZE 256
+#else
+#define SCANLINE_OAM_BUFFER_SIZE 8 
+#endif
+
 enum RenderState {
     RENDER,
     POST_RENDER,
@@ -122,7 +131,7 @@ struct PPU {
     uint8_t ppu_data_buffer;
 
     uint8_t OAM[256];
-    uint8_t scanline_OAM_indecies[8]; 
+    uint8_t scanline_OAM_indecies[SCANLINE_OAM_BUFFER_SIZE]; 
     uint8_t scanline_OAM_length;
 
     enum RenderState render_state;

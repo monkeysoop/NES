@@ -211,7 +211,7 @@ enum GenerateInterrupt PPUClockNTSC(struct PPU* ppu, uint32_t pixels_buffer[NES_
                 for (int oam_index = ppu->oam_address_register / 4; oam_index < 64; oam_index++) {
                     uint8_t sprite_y = ppu->OAM[oam_index * 4];
                     if (sprite_y <= (ppu->scanline - 1) && (ppu->scanline - 1) < (sprite_y + height)) {     // note that scanline has already been incremented but the way sprite y is implemented it needs to be offset one less
-                        if (ppu->scanline_OAM_length < 8) {
+                        if (ppu->scanline_OAM_length < SCANLINE_OAM_BUFFER_SIZE) {
                             ppu->scanline_OAM_indecies[ppu->scanline_OAM_length] = oam_index * 4;
                             ppu->scanline_OAM_length++;
                         } else {
