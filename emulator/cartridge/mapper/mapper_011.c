@@ -34,7 +34,6 @@ void Mapper011Init(struct Cartridge* cartridge) {
 uint8_t Mapper011ReadCPU(struct Cartridge* cartridge, uint16_t address) {
     struct Mapper011Info* mapper_info = (struct Mapper011Info*)cartridge->mapper_info;
     if (address < 0x6000) {
-        return 0;
         LOG(ERROR, MAPPER, "Attempted read from unmapped area\n");
     } else if (address < 0x8000) {
         LOG(ERROR, MAPPER, "Attempted read from prg ram that's not supported by mapper 011\n");
@@ -51,7 +50,7 @@ uint8_t Mapper011ReadPPU(struct Cartridge* cartridge, uint16_t address) {
 void Mapper011WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper011Info* mapper_info = (struct Mapper011Info*)cartridge->mapper_info;
     if (address < 0x6000) {
-        LOG(ERROR, MAPPER, "Attempted write to unmapped area\n");
+        LOG(WARNING, MAPPER, "Attempted write to unmapped area\n");
     } else if (address < 0x8000) {
         LOG(ERROR, MAPPER, "Attempted write to prg ram that's not supported by mapper 011\n");
     } else {

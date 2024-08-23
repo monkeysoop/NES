@@ -50,7 +50,7 @@ uint8_t Mapper066ReadPPU(struct Cartridge* cartridge, uint16_t address) {
 void Mapper066WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper066Info* mapper_info = (struct Mapper066Info*)cartridge->mapper_info;
     if (address < 0x6000) {
-        LOG(ERROR, MAPPER, "Attempted write to unmapped area\n");
+        LOG(WARNING, MAPPER, "Attempted write to unmapped area\n");
     } else if (address < 0x8000) {
         LOG(ERROR, MAPPER, "Attempted write to prg ram that's not supported by mapper 066\n");
     } else {
