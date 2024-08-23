@@ -153,6 +153,9 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
                 Mapper004Init(cartridge); 
                 break;
             case AxROM:
+                cartridge->mapper_info = malloc(sizeof(struct Mapper007Info));
+                Mapper007Init(cartridge); 
+                break;
             case ColorDreams:
             case GxROM:
             default: 
