@@ -9,15 +9,15 @@
 #define EXIT_ON_WARNING 0
 
 
-#define IGNORE_CARTRIDGE  0
-#define IGNORE_MAPPER     0
-#define IGNORE_CONTROLLER 0
-#define IGNORE_CPU        1
-#define IGNORE_CPU_BUS    1
-#define IGNORE_PPU        0
-#define IGNORE_PPU_BUS    0
-#define IGNORE_EMULATOR   0
-#define IGNORE_MAIN       0
+#define IGNORE_MESSAGE_CARTRIDGE  1
+#define IGNORE_MESSAGE_MAPPER     0
+#define IGNORE_MESSAGE_CONTROLLER 0
+#define IGNORE_MESSAGE_CPU        0
+#define IGNORE_MESSAGE_CPU_BUS    1
+#define IGNORE_MESSAGE_PPU        0
+#define IGNORE_MESSAGE_PPU_BUS    0
+#define IGNORE_MESSAGE_EMULATOR   0
+#define IGNORE_MESSAGE_MAIN       0
 
 enum LogLevel {
     WARNING,
@@ -41,63 +41,90 @@ enum LogSource {
 #define LOG(log_level, log_source, format, ...) do { \
     switch (log_source) { \
         case CARTRIDGE: \
-            if (IGNORE_CARTRIDGE) { \
+            if (IGNORE_MESSAGE_CARTRIDGE) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("CARTRIDGE "); \
             } \
             break; \
         case MAPPER: \
-            if (IGNORE_MAPPER) { \
+            if (IGNORE_MESSAGE_MAPPER) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("MAPPER "); \
             } \
             break; \
         case CONTROLLER: \
-            if (IGNORE_CONTROLLER) { \
+            if (IGNORE_MESSAGE_CONTROLLER) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("CONTROLLER "); \
             } \
             break; \
         case CPU: \
-            if (IGNORE_CPU) { \
+            if (IGNORE_MESSAGE_CPU) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("CPU "); \
             } \
             break; \
         case CPU_BUS: \
-            if (IGNORE_CPU_BUS) { \
+            if (IGNORE_MESSAGE_CPU_BUS) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("CPU_BUS "); \
             } \
             break; \
         case PPU: \
-            if (IGNORE_PPU) { \
+            if (IGNORE_MESSAGE_PPU) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("PPU "); \
             } \
             break; \
         case PPU_BUS: \
-            if (IGNORE_PPU_BUS) { \
+            if (IGNORE_MESSAGE_PPU_BUS) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("PPU_BUS "); \
             } \
             break; \
         case EMULATOR: \
-            if (IGNORE_EMULATOR) { \
+            if (IGNORE_MESSAGE_EMULATOR) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("EMULATOR "); \
             } \
             break; \
         case MAIN: \
-            if (IGNORE_MAIN) { \
+            if (IGNORE_MESSAGE_MAIN) { \
+                if ((log_level == WARNING && EXIT_ON_WARNING) || log_level == ERROR) { \
+                    exit(1); \
+                } \
                 continue; \
             } else { \
                 printf("MAIN "); \
