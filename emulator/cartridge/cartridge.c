@@ -119,6 +119,7 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
         uint8_t mapper_id = header.mapper_id_bits_0123 | (header.mapper_id_bits_4567 << 4);
 
         LOG(DEBUG_INFO, CARTRIDGE, "mapper id: %d\n", mapper_id);
+        LOG(DEBUG_INFO, CARTRIDGE, "supports ramn: %d\n", cartridge->supports_chr_ram);
         LOG(DEBUG_INFO, CARTRIDGE, 
             "prg rom size: %d * 16KB = %dKB\nchr rom size: %d * 8KB = %dKB\nprg ram size: %d * 8KB = %dKB\n", 
             cartridge->prg_rom_16KB_units, (cartridge->prg_rom_16KB_units * 16), 
@@ -157,6 +158,9 @@ void CartridgeInit(struct Cartridge* cartridge, const char* filename) {
                 Mapper007Init(cartridge); 
                 break;
             case ColorDreams:
+                cartridge->mapper_info = malloc(sizeof(struct Mapper011Info));
+                Mapper011Init(cartridge); 
+                break;
             case GxROM:
             default: 
                 fclose(cartridge_file); 

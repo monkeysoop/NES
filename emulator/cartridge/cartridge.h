@@ -125,6 +125,11 @@ struct Mapper007Info {
     uint32_t prg_rom_bank_offset;
 };
 
+struct Mapper011Info {
+    uint32_t prg_rom_bank_offset;
+    uint32_t chr_rom_bank_offset;
+};
+
 void CartridgeInit(struct Cartridge* cartridge, const char* filename);
 void CartridgeClean(struct Cartridge* cartridge);
 
@@ -143,5 +148,6 @@ void Mapper002Init(struct Cartridge* cartridge);
 void Mapper003Init(struct Cartridge* cartridge);
 void Mapper004Init(struct Cartridge* cartridge);
 void Mapper007Init(struct Cartridge* cartridge);
+void Mapper011Init(struct Cartridge* cartridge);
 
 #endif
