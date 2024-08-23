@@ -29,14 +29,18 @@ void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename) {
 
 }
 
-void EmulatorKeyDown(struct Emulator* emulator, enum Button button) {
-    ControllerKeyDown1(&emulator->controller, button);
-    ControllerKeyDown2(&emulator->controller, button);
+void EmulatorKeyDown(struct Emulator* emulator, enum Button button, enum Player player) {
+    switch (player) {
+        case PLAYER_1: ControllerKeyDown1(&emulator->controller, button); break;
+        case PLAYER_2: ControllerKeyDown2(&emulator->controller, button); break;
+    }
 }
 
-void EmulatorKeyUp(struct Emulator* emulator, enum Button button) {
-    ControllerKeyUp1(&emulator->controller, button);
-    ControllerKeyUp2(&emulator->controller, button);
+void EmulatorKeyUp(struct Emulator* emulator, enum Button button, enum Player player) {
+    switch (player) {
+        case PLAYER_1: ControllerKeyUp1(&emulator->controller, button); break;
+        case PLAYER_2: ControllerKeyUp2(&emulator->controller, button); break;
+    }
 }
 
 void EmulatorRender(struct Emulator* emulator, uint32_t pixels_buffer[NES_SCREEN_WIDTH * NES_SCREEN_HEIGHT]) {

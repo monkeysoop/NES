@@ -507,17 +507,24 @@ int main(int argc, char** argv)
 				case SDL_KEYDOWN:
                     switch (ev.key.keysym.sym) {
                         case SDLK_ESCAPE: quit = true; break;
-                        case SDLK_q: quit = true; break;
+                        case SDLK_PERIOD: quit = true; break;
                         case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
-                        // case SDLK_f: for (int i = 0; i < 200; i++) {EmulatorRender(&emulator, main_window.pixels_buffer); } break;
-                        case SDLK_w: EmulatorKeyDown(&emulator, UP); break;
-                        case SDLK_a: EmulatorKeyDown(&emulator, LEFT); break;
-                        case SDLK_s: EmulatorKeyDown(&emulator, DOWN); break;
-                        case SDLK_d: EmulatorKeyDown(&emulator, RIGHT); break;
-                        case SDLK_g: EmulatorKeyDown(&emulator, A); break;
-                        case SDLK_f: EmulatorKeyDown(&emulator, B); break;
-                        case SDLK_c: EmulatorKeyDown(&emulator, SELECT); break;
-                        case SDLK_v: EmulatorKeyDown(&emulator, START); break;
+                        case SDLK_w: EmulatorKeyDown(&emulator, UP, PLAYER_1); break;
+                        case SDLK_a: EmulatorKeyDown(&emulator, LEFT, PLAYER_1); break;
+                        case SDLK_s: EmulatorKeyDown(&emulator, DOWN, PLAYER_1); break;
+                        case SDLK_d: EmulatorKeyDown(&emulator, RIGHT, PLAYER_1); break;
+                        case SDLK_g: EmulatorKeyDown(&emulator, A, PLAYER_1); break;
+                        case SDLK_f: EmulatorKeyDown(&emulator, B, PLAYER_1); break;
+                        case SDLK_c: EmulatorKeyDown(&emulator, SELECT, PLAYER_1); break;
+                        case SDLK_v: EmulatorKeyDown(&emulator, START, PLAYER_1); break;
+                        case SDLK_UP: EmulatorKeyDown(&emulator, UP, PLAYER_2); break;
+                        case SDLK_LEFT: EmulatorKeyDown(&emulator, LEFT, PLAYER_2); break;
+                        case SDLK_DOWN: EmulatorKeyDown(&emulator, DOWN, PLAYER_2); break;
+                        case SDLK_RIGHT: EmulatorKeyDown(&emulator, RIGHT, PLAYER_2); break;
+                        case SDLK_6: EmulatorKeyDown(&emulator, A, PLAYER_2); break;
+                        case SDLK_5: EmulatorKeyDown(&emulator, B, PLAYER_2); break;
+                        case SDLK_1: EmulatorKeyDown(&emulator, SELECT, PLAYER_2); break;
+                        case SDLK_2: EmulatorKeyDown(&emulator, START, PLAYER_2); break;
                         default: break;
                     }
 					break;
@@ -535,16 +542,35 @@ int main(int argc, char** argv)
                         case SDLK_SPACE: paused = !(paused); break;
                         case SDLK_r: EmulatorReset(&emulator); break;
                         case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
-                        case SDLK_p: debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; break;
-                        case SDLK_n: debug_window.layout.selected_nametable = (debug_window.layout.selected_nametable + 1) % 4; break;
-                        case SDLK_w: EmulatorKeyUp(&emulator, UP); break;
-                        case SDLK_a: EmulatorKeyUp(&emulator, LEFT); break;
-                        case SDLK_s: EmulatorKeyUp(&emulator, DOWN); break;
-                        case SDLK_d: EmulatorKeyUp(&emulator, RIGHT); break;
-                        case SDLK_g: EmulatorKeyUp(&emulator, A); break;
-                        case SDLK_f: EmulatorKeyUp(&emulator, B); break;
-                        case SDLK_c: EmulatorKeyUp(&emulator, SELECT); break;
-                        case SDLK_v: EmulatorKeyUp(&emulator, START); break;
+                        case SDLK_p: 
+                            debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; 
+                            LOG(INFO, MAIN, "new palette selected: %d\n", debug_window.layout.selected_palette);
+                            break;
+                        case SDLK_n: 
+                            debug_window.layout.selected_nametable = (debug_window.layout.selected_nametable + 1) % 4; 
+                            LOG(INFO, MAIN, 
+                                "new nametable selected: %d  addresses: 0x%04X - 0x%04X\n", 
+                                debug_window.layout.selected_nametable, 
+                                (0x2000 + (debug_window.layout.selected_nametable * 0x0400)),
+                                (0x2000 + ((debug_window.layout.selected_nametable + 1) * 0x0400) -1)
+                            );
+                            break;
+                        case SDLK_w: EmulatorKeyUp(&emulator, UP, PLAYER_1); break;
+                        case SDLK_a: EmulatorKeyUp(&emulator, LEFT, PLAYER_1); break;
+                        case SDLK_s: EmulatorKeyUp(&emulator, DOWN, PLAYER_1); break;
+                        case SDLK_d: EmulatorKeyUp(&emulator, RIGHT, PLAYER_1); break;
+                        case SDLK_g: EmulatorKeyUp(&emulator, A, PLAYER_1); break;
+                        case SDLK_f: EmulatorKeyUp(&emulator, B, PLAYER_1); break;
+                        case SDLK_c: EmulatorKeyUp(&emulator, SELECT, PLAYER_1); break;
+                        case SDLK_v: EmulatorKeyUp(&emulator, START, PLAYER_1); break;
+                        case SDLK_UP: EmulatorKeyUp(&emulator, UP, PLAYER_2); break;
+                        case SDLK_LEFT: EmulatorKeyUp(&emulator, LEFT, PLAYER_2); break;
+                        case SDLK_DOWN: EmulatorKeyUp(&emulator, DOWN, PLAYER_2); break;
+                        case SDLK_RIGHT: EmulatorKeyUp(&emulator, RIGHT, PLAYER_2); break;
+                        case SDLK_6: EmulatorKeyUp(&emulator, A, PLAYER_2); break;
+                        case SDLK_5: EmulatorKeyUp(&emulator, B, PLAYER_2); break;
+                        case SDLK_1: EmulatorKeyUp(&emulator, SELECT, PLAYER_2); break;
+                        case SDLK_2: EmulatorKeyUp(&emulator, START, PLAYER_2); break;
                         default: break;
                     }
 					break;
