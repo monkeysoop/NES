@@ -170,8 +170,7 @@ static inline void StackPushLittleEndianWord(struct CPU* cpu, uint16_t data) {
 
 
 static uint16_t IlligalMode(struct CPU* cpu) {
-    LOG(ERROR, CPU, "illigal addressing mode");
-    return 0;
+    LOG(ERROR, CPU, "illigal addressing mode (most likely caused by an illigal or unofficial opcode which is not supported)");
 }
 static uint16_t Accumulator(struct CPU* cpu) {
     return 0;   // not used because Accumulator addressing takes no value from memory 
@@ -282,7 +281,7 @@ static uint16_t IndirectY(struct CPU* cpu) {
 
 
 static void ILL(struct CPU* cpu, const uint16_t absolute_address) {
-    LOG(ERROR, CPU, "illigal opcode");
+    LOG(ERROR, CPU, "illigal (or unofficial opcode which is not supported) opcode");
     return;
 }
 
