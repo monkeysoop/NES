@@ -4,7 +4,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 
-add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-unused-value -O3)
+add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter -O3)
 
 
 add_custom_target(copy-font-png ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/font.png)
@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME} main.c)
 
 
 add_dependencies(${PROJECT_NAME} EMULATOR)
+add_dependencies(${PROJECT_NAME} LOGGER)
 
 
 add_custom_target(
@@ -39,8 +40,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)   # for sd
 
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
-
-include_directories(${PROJECT_NAME} ${SDL2_INCLUDE_DIRS})
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
