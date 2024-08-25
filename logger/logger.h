@@ -127,23 +127,23 @@ enum LogSource {
                 } \
                 continue; \
             } else { \
-                printf("MAIN "); \
+                printf("NES "); \
             } \
             break; \
     } \
 \
     switch (log_level) { \
         case WARNING: \
-            printf("WARNING\n"); \
+            printf("WARNING:\n"); \
             break; \
         case INFO: \
-            printf("INFO\n"); \
+            printf("INFO:\n"); \
             break; \
         case DEBUG_INFO: \
-            printf("DEBUG INFO\n"); \
+            printf("DEBUG INFO:\n"); \
             break; \
         case ERROR: \
-            printf("ERROR\n"); \
+            printf("ERROR:\n"); \
             break; \
     } \
 \
