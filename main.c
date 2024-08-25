@@ -540,7 +540,10 @@ int main(int argc, char** argv)
                             debug_shown = !(debug_shown); 
                             break;
                         case SDLK_SPACE: paused = !(paused); break;
-                        case SDLK_r: EmulatorReset(&emulator); break;
+                        case SDLK_r: 
+                            EmulatorReloadCartridge(&emulator, argv[1]);
+                            EmulatorReset(&emulator);
+                            break;
                         case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
                         case SDLK_p: 
                             debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; 

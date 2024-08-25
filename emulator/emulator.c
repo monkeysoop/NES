@@ -26,7 +26,7 @@ void EmulatorReset(struct Emulator* emulator) {
 }
 
 void EmulatorReloadCartridge(struct Emulator* emulator, const char* filename) {
-
+    CartridgeInit(&emulator->cartridge, filename);
 }
 
 void EmulatorKeyDown(struct Emulator* emulator, enum Button button, enum Player player) {
