@@ -224,42 +224,36 @@ void CartridgeSetMirroring(struct Cartridge* cartridge, enum Mirroring mirroring
     cartridge->mirroring = mirroring;
     switch (mirroring) {
         case VERTICAL_MIRRORING: 
-            LOG(DEBUG_INFO, CARTRIDGE, "Vertical Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x400;
             cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case HORIZONTAL_MIRRORING: 
-            LOG(DEBUG_INFO, CARTRIDGE, "Horizontal Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x400;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case ONE_SCREEN_MIRRORING: 
-            LOG(DEBUG_INFO, CARTRIDGE, "One Screen Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x0;
             break;
         case ONE_SCREEN_LOWER_MIRRORING: 
-            LOG(DEBUG_INFO, CARTRIDGE, "One Screen Lower Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x0;
             cartridge->mirroring_offsets[3] = 0x0;
             break;
         case ONE_SCREEN_UPPER_MIRRORING: 
-            LOG(DEBUG_INFO, CARTRIDGE, "One Screen Upper Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x400;
             cartridge->mirroring_offsets[1] = 0x400;
             cartridge->mirroring_offsets[2] = 0x400;
             cartridge->mirroring_offsets[3] = 0x400;
             break;
         case FOUR_SCREEN_MIRRORING: 
-            LOG(DEBUG_INFO, CARTRIDGE, "Four Screen Mirroring\n");
             cartridge->mirroring_offsets[0] = 0x0;
             cartridge->mirroring_offsets[1] = 0x0;
             cartridge->mirroring_offsets[2] = 0x0;

@@ -34,9 +34,14 @@ void Mapper003Init(struct Cartridge* cartridge) {
 uint8_t Mapper003ReadCPU(struct Cartridge* cartridge, uint16_t address) {
     struct Mapper003Info* mapper_info = (struct Mapper003Info*)cartridge->mapper_info;
     if (address < 0x6000) {
-        LOG(ERROR, MAPPER, "Attempted read from unmapped area\n");
+        LOG(WARNING, MAPPER, "Attempted read from unmapped area\n");
+        return 0;
     } else if (address < 0x8000) {
-        LOG(ERROR, MAPPER, "Attempted read from prg ram that's not supported by mapper 003\n");
+        if (cartridge->prg_ram_8KB_units == 0) {
+            LOG(ERROR, MAPPER, "Attempted read from prg ram that hase size 0\n");
+        } else {
+            return cartridge->prg_ram[address & 0x1FFF];
+        }
     } else {
         return cartridge->prg_rom[address & mapper_info->prg_rom_mask];
     }
@@ -50,9 +55,13 @@ uint8_t Mapper003ReadPPU(struct Cartridge* cartridge, uint16_t address) {
 void Mapper003WriteCPU(struct Cartridge* cartridge, uint16_t address, uint8_t data) {
     struct Mapper003Info* mapper_info = (struct Mapper003Info*)cartridge->mapper_info;
     if (address < 0x6000) {
-        LOG(ERROR, MAPPER, "Attempted write to unmapped area\n");
+        LOG(WARNING, MAPPER, "Attempted write to unmapped area\n");
     } else if (address < 0x8000) {
-        LOG(ERROR, MAPPER, "Attempted write to prg ram that's not supported by mapper 003\n");
+        if (cartridge->prg_ram_8KB_units == 0) {
+            LOG(ERROR, MAPPER, "Attempted write to prg ram that has size 0\n");
+        } else {
+            cartridge->prg_ram[address & 0x1FFF] = data;
+        }
     } else {
         mapper_info->chr_rom_offset = 0x2000 * data;
     }
