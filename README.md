@@ -220,6 +220,13 @@ docker kill a9c8f9866032
 * 1 - Select
 * 2 - Start
 
+## Sources:
+* https://github.com/amhndu/SimpleNES
+* https://github.com/ObaraEmmanuel/NES
+* https://github.com/OneLoneCoder/olcNES
+* https://github.com/gianlucag/mos6502
+* https://www.nesdev.org/
+
 ## "Some" of the games that I ran succesfully:
 * Castlevania
 ![Castlevania_1](screenshots/Castlevania_1.png)
