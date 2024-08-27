@@ -51,8 +51,8 @@ it displays:
 ![MegaMan5_6](screenshots/MegaMan5_6.png)
 ![MegaMan4_2](screenshots/MegaMan4_2.png)
 
-## Build instructions for Linux
-### Option 1 build locally:
+## Build instructions
+### Option 1 build locally on Debian based systems:
 * install required packages:
 ```shell
 sudo apt install git
@@ -99,6 +99,8 @@ chmod +x run.sh
 nestest.nes is a simple program that is included in the repo (which tests the cpu intructions)
 
 ### Option 2 build and run in docker:
+
+#### For Debian based systems:
 * install required packages:
 ```shell
 sudo apt install git
@@ -116,10 +118,16 @@ sudo systemctl start docker
 ```shell
 sudo systemctl enable docker
 ```
-(this is for debian based systems)
-
 * restart the computer
 
+#### For Windows
+* install Docker
+* launch powershell
+* disable windows automatic line ending conversions in git
+```shell
+git config --global core.autocrlf input
+``` 
+#### Next (both Windows and Debian)
 * clone repo:
 ```shell
 git clone --recurse-submodules https://github.com/monkeysoop/NES
