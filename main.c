@@ -508,7 +508,6 @@ int main(int argc, char** argv)
                     switch (ev.key.keysym.sym) {
                         case SDLK_ESCAPE: quit = true; break;
                         case SDLK_q: quit = true; break;
-                        case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
                         case SDLK_w: EmulatorKeyDown(&emulator, UP, PLAYER_1); break;
                         case SDLK_a: EmulatorKeyDown(&emulator, LEFT, PLAYER_1); break;
                         case SDLK_s: EmulatorKeyDown(&emulator, DOWN, PLAYER_1); break;
@@ -544,7 +543,6 @@ int main(int argc, char** argv)
                             EmulatorReloadCartridge(&emulator, argv[1]);
                             EmulatorReset(&emulator);
                             break;
-                        case SDLK_t: EmulatorRender(&emulator, main_window.pixels_buffer); break;
                         case SDLK_p: 
                             debug_window.layout.selected_palette = (debug_window.layout.selected_palette + 1) % PALETTE_BUFFER_HEIGHT; 
                             LOG(INFO, MAIN, "new palette selected: %d\n", debug_window.layout.selected_palette);

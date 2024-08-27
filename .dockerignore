@@ -1,0 +1,15 @@
+* 
+
+!main.c
+!CMakeLists.txt
+
+!emulator/
+!logger/
+
+!cmake/
+!cmake/sld2/
+
+!font.png
+!entrypoint.sh
+
+!tests/*.nes

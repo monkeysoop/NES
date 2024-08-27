@@ -99,7 +99,115 @@ chmod +x run.sh
 nestest.nes is a simple program that is included in the repo (which tests the cpu intructions)
 
 ### Option 2 build and run in docker:
-TODO
+* install required packages:
+```shell
+sudo apt install git
+```
+
+```shell
+sudo apt install docker.io
+```
+
+* start the docker daemon
+```shell
+sudo systemctl start docker
+```
+
+```shell
+sudo systemctl enable docker
+```
+(this is for debian based systems)
+
+* restart the computer
+
+* clone repo:
+```shell
+git clone --recurse-submodules https://github.com/monkeysoop/NES
+```
+
+```shell
+cd NES
+```
+
+* optional: copy any additional (that you have/downloaded from other places) roms (.nes files) into tests directory, only a test rom (nestest.nes) is included due to copyright/legal reasons
+
+* build the docker image
+```shell
+docker build -t nes_docker_image .
+```
+
+* optional: add more roms (.nes files) to the already built image
+```shell
+docker create --name nes_docker_image_tmp nes_docker_image
+```
+
+```shell
+docker cp $(pwd)/tests/Tetris.nes nes_docker_image_tmp:/usr/src/app/build/tests
+```
+or copy a whole directory
+```shell
+docker cp $(pwd)/tests/. nes_docker_image_tmp:/usr/src/app/build/tests
+```
+note: $(pwd) is because docker cp uses absolute paths, but /home/myusername/Downloads/folderwithnesroms/. works fine too
+
+```shell
+docker commit nes_docker_image_tmp nes_docker_image
+```
+
+* optional: change the default password for vnc ("mypassword" is the default) in entrypoint.sh
+```shell
+echo "mypassword" | vncpasswd -f > ~/.vnc/passwd
+```
+
+* run the docker image
+```shell
+docker run --rm -it -p 5901:5901 -p 6080:6080 --name nes_docker_container nes_docker_image build/tests/nestest.nes
+```
+* optional: if you add -d flagg than it will be run in background
+and to kill it if its running in background:
+```shell
+docker kill nes_docker_container
+```
+or:
+```shell
+docker ps
+```
+and kill it by container id eg:
+```shell
+docker kill a9c8f9866032
+```
+
+* finally open a browser (I only tested firefox and chrome) and go to: http://localhost:6080/vnc.html
+
+## Default keybindings (to change it the only option is to edit the source code)
+
+### Basics:
+Esc, q - closes the application
+Space - starts/pauses the emulator
+r - resets the emulator
+i - shows/hides the Debug View window
+p - cycles the palette colors on the pattern table in Debug View window
+n - cycles the displayed nametables in Debug View window
+
+### Controller 1:
+w - Up
+a - Left
+s - Down
+d - Right
+g - A
+f - B
+c - Select
+v - Start
+
+## Controller 2:
+Up arrow - Up
+Left arrow - Left
+Down arrow - Down
+Right arrow - Right
+6 - A
+5 - B
+1 - Select
+2 - Start
 
 ## "Some" of the games that I ran succesfully:
 * Castlevania
