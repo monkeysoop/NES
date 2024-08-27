@@ -185,32 +185,32 @@ docker kill a9c8f9866032
 ## Default keybindings (to change it the only option is to edit the source code)
 
 ### Basics:
-Esc, q - closes the application
-Space - starts/pauses the emulator
-r - resets the emulator
-i - shows/hides the Debug View window
-p - cycles the palette colors on the pattern table in Debug View window
-n - cycles the displayed nametables in Debug View window
+* Esc, q - closes the application
+* Space - starts/pauses the emulator
+* r - resets the emulator
+* i - shows/hides the Debug View window
+* p - cycles the palette colors on the pattern table in Debug View window
+* n - cycles the displayed nametables in Debug View window
 
 ### Controller 1:
-w - Up
-a - Left
-s - Down
-d - Right
-g - A
-f - B
-c - Select
-v - Start
+* w - Up
+* a - Left
+* s - Down
+* d - Right
+* g - A
+* f - B
+* c - Select
+* v - Start
 
 ## Controller 2:
-Up arrow - Up
-Left arrow - Left
-Down arrow - Down
-Right arrow - Right
-6 - A
-5 - B
-1 - Select
-2 - Start
+* Up arrow - Up
+* Left arrow - Left
+* Down arrow - Down
+* Right arrow - Right
+* 6 - A
+* 5 - B
+* 1 - Select
+* 2 - Start
 
 ## "Some" of the games that I ran succesfully:
 * Castlevania
