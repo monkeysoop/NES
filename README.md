@@ -148,8 +148,11 @@ or copy a whole directory
 ```shell
 docker cp $(pwd)/tests/. nes_docker_image_tmp:/usr/src/app/build/tests
 ```
-note: $(pwd) is because docker cp uses absolute paths, but /home/myusername/Downloads/folderwithnesroms/. works fine too
-
+note: $(pwd) is because docker cp uses absolute paths, but this works fine too:
+```shell
+docker cp /home/myusername/Downloads/folderwithnesroms/. nes_docker_image_tmp:/usr/src/app/build/tests
+```
+apply the changes
 ```shell
 docker commit nes_docker_image_tmp nes_docker_image
 ```
